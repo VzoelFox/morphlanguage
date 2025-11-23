@@ -1,11 +1,11 @@
 # core/translator.fox
 # Interpreter Morph
 
-ambil_semua "core/translator_shard/core.fox" sebagai Core
+ambil_semua "translator_shard/core.fox"
 
 # Re-export Penerjemah
-kelas Penerjemah warisi Core.Penerjemah maka
+kelas Penerjemah warisi PenerjemahCore maka
     fungsi init(formatter, output_stream) maka
-        induk(formatter, output_stream)
+        induk.init(formatter, output_stream)
     akhir
 akhir

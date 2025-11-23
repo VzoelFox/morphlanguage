@@ -2,32 +2,32 @@
 # File ini berisi kelas-kelas yang merepresentasikan objek dan struktur data
 # saat runtime di dalam interpreter Morph.
 
-ambil_semua "core/morph_t.fox" sebagai T
-ambil_semua "core/absolute_syntax_morph.fox" sebagai AST
-ambil_sebagian tambah, kurang dari "core/cotc(stdlib)/core.fox"
+ambil_semua "../morph_t.fox" sebagai T
+ambil_semua "../absolute_syntax_morph.fox" sebagai AST
+ambil_sebagian tambah, kurang, panjang dari "../cotc(stdlib)/core.fox"
 
 # Exception khusus untuk menangani alur kontrol
 kelas NilaiKembalian maka
     biar nilai
     fungsi init(nilai) maka
-        ini.nilai = nilai
+        ubah ini.nilai = nilai
     akhir
 akhir
 
 kelas BerhentiLoop maka akhir
 kelas LanjutkanLoop maka akhir
 
-# Kesalahan Runtime (Simulasi, idealnya di file terpisah tapi disatukan disini agar konsisten dengan porting)
+# Kesalahan Runtime
 kelas KesalahanRuntime maka
     biar token
     biar pesan
     biar morph_stack
     biar node
     fungsi init(token, pesan) maka
-        ini.token = token
-        ini.pesan = pesan
-        ini.morph_stack = []
-        ini.node = nil
+        ubah ini.token = token
+        ubah ini.pesan = pesan
+        ubah ini.morph_stack = []
+        ubah ini.node = nil
     akhir
 akhir
 
@@ -35,10 +35,9 @@ kelas KesalahanTipe warisi KesalahanRuntime maka akhir
 kelas KesalahanNama warisi KesalahanRuntime maka akhir
 
 kelas FungsiBawaan maka
-    # Wrapper untuk fungsi yang diekspos sebagai fungsi built-in MORPH.
     biar panggil_logic
     fungsi init(panggil_logic) maka
-        ini.panggil_logic = panggil_logic
+        ubah ini.panggil_logic = panggil_logic
     akhir
 
     fungsi panggil(argumen) maka
@@ -49,7 +48,7 @@ akhir
 kelas FungsiBawaanAsink maka
     biar panggil_logic
     fungsi init(panggil_logic) maka
-        ini.panggil_logic = panggil_logic
+        ubah ini.panggil_logic = panggil_logic
     akhir
 
     asink fungsi panggil(argumen) maka
@@ -58,24 +57,23 @@ kelas FungsiBawaanAsink maka
 akhir
 
 kelas Lingkungan maka
-    # Manajemen scope dan simbol (variabel/fungsi).
     biar nilai
     biar konstanta
     biar induk
 
     fungsi init(induk) maka
-        ini.nilai = {} # Kamus
-        ini.konstanta = [] # Daftar/Set (Morph mungkin pakai list)
-        ini.induk = induk
+        ubah ini.nilai = {}
+        ubah ini.konstanta = []
+        ubah ini.induk = induk
     akhir
 
     fungsi definisi(nama, val, adalah_konstan) maka
-        # Default parameter workaround
-        jika adalah_konstan == nil maka ubah adalah_konstan = salah akhir
+        jika adalah_konstan == nil maka
+            ubah adalah_konstan = salah
+        akhir
 
-        ini.nilai[nama] = val
+        ubah ini.nilai[nama] = val
         jika adalah_konstan maka
-            # Simpan di list konstanta
             tambah(ini.konstanta, nama)
         akhir
     akhir
@@ -84,11 +82,10 @@ kelas Lingkungan maka
         biar nama = token.nilai
         biar lingk = ini
         selama lingk != nil maka
-            # Cek key exist di kamus (syntax imajiner 'punya')
             jika lingk.nilai.punya(nama) maka
                 kembali lingk.nilai[nama]
             akhir
-            lingk = lingk.induk
+            ubah lingk = lingk.induk
         akhir
         lemparkan KesalahanNama(token, "Variabel '" + nama + "' belum didefinisikan.")
     akhir
@@ -98,19 +95,18 @@ kelas Lingkungan maka
         biar lingk = ini
         selama lingk != nil maka
             jika lingk.nilai.punya(nama) maka
-                # Cek apakah konstan
                 biar i = 0
                 selama i < panjang(lingk.konstanta) maka
                     jika lingk.konstanta[i] == nama maka
                         lemparkan KesalahanRuntime(token, "Tidak bisa mengubah konstanta '" + nama + "'.")
                     akhir
-                    i = i + 1
+                    ubah i = i + 1
                 akhir
 
-                lingk.nilai[nama] = val
+                ubah lingk.nilai[nama] = val
                 kembali
             akhir
-            lingk = lingk.induk
+            ubah lingk = lingk.induk
         akhir
         lemparkan KesalahanNama(token, "Variabel '" + nama + "' belum didefinisikan.")
     akhir
@@ -120,8 +116,8 @@ kelas InstansiVarian maka
     biar konstruktor
     biar argumen
     fungsi init(konstruktor, argumen) maka
-        ini.konstruktor = konstruktor
-        ini.argumen = argumen
+        ubah ini.konstruktor = konstruktor
+        ubah ini.argumen = argumen
     akhir
 akhir
 
@@ -129,8 +125,8 @@ kelas KonstruktorVarian maka
     biar nama
     biar aritas
     fungsi init(nama, aritas) maka
-        ini.nama = nama
-        ini.aritas = aritas
+        ubah ini.nama = nama
+        ubah ini.aritas = aritas
     akhir
 
     fungsi panggil(argumen, token_panggil) maka
@@ -145,8 +141,8 @@ kelas TipeVarian maka
     biar nama
     biar konstruktor
     fungsi init(nama) maka
-        ini.nama = nama
-        ini.konstruktor = {}
+        ubah ini.nama = nama
+        ubah ini.konstruktor = {}
     akhir
 akhir
 
@@ -154,16 +150,16 @@ kelas MorphInstance maka
     biar kelas_obj
     biar properti
     fungsi init(kelas_obj) maka
-        ini.kelas_obj = kelas_obj
-        ini.properti = {}
+        ubah ini.kelas_obj = kelas_obj
+        ubah ini.properti = {}
     akhir
 
     fungsi dapatkan(nama_token, dari_internal) maka
-        jika dari_internal == nil maka ubah dari_internal = salah akhir
+        jika dari_internal == nil maka
+            ubah dari_internal = salah
+        akhir
         biar nama = nama_token.nilai
 
-        # Cek privat
-        # Asumsi string startswith atau slice
         jika nama[0] == "_" dan tidak dari_internal maka
              lemparkan KesalahanNama(nama_token, "Properti privat tidak bisa diakses.")
         akhir
@@ -181,13 +177,15 @@ kelas MorphInstance maka
     akhir
 
     fungsi tetapkan(nama_token, nilai, dari_internal) maka
-        jika dari_internal == nil maka ubah dari_internal = salah akhir
+        jika dari_internal == nil maka
+            ubah dari_internal = salah
+        akhir
         biar nama = nama_token.nilai
 
         jika nama[0] == "_" dan tidak dari_internal maka
              lemparkan KesalahanNama(nama_token, "Properti privat tidak bisa diubah.")
         akhir
-        ini.properti[nama] = nilai
+        ubah ini.properti[nama] = nilai
     akhir
 akhir
 
@@ -197,9 +195,9 @@ kelas MorphKelas maka
     biar metode
 
     fungsi init(nama, superkelas, metode) maka
-        ini.nama = nama
-        ini.superkelas = superkelas
-        ini.metode = metode
+        ubah ini.nama = nama
+        ubah ini.superkelas = superkelas
+        ubah ini.metode = metode
     akhir
 
     asink fungsi panggil(interpreter, node_panggil) maka
@@ -208,21 +206,18 @@ kelas MorphKelas maka
 
         jika inisiasi != nil maka
             biar argumen = []
-            # Evaluasi argumen (perlu akses ke interpreter._evaluasi, dikirim via param)
-            # Di sini kita asumsikan pemanggil sudah menyiapkan argumen yang tereksekusi?
-            # TIDAK, di Python tipe_runtime.py melakukan evaluasi argumen di sini:
-            # tasks = [interpreter._evaluasi(arg) for arg in node_panggil.argumen]
-
             biar i = 0
             selama i < panjang(node_panggil.argumen) maka
                 biar val = tunggu interpreter._evaluasi(node_panggil.argumen[i])
                 tambah(argumen, val)
-                i = i + 1
+                ubah i = i + 1
             akhir
 
             tunggu inisiasi.bind(instance).panggil_metode(interpreter, argumen, node_panggil.token)
-        lainjika panjang(node_panggil.argumen) > 0 maka
-             lemparkan KesalahanTipe(node_panggil.token, "Konstruktor default tidak menerima argumen.")
+        lain
+            jika panjang(node_panggil.argumen) > 0 maka
+                 lemparkan KesalahanTipe(node_panggil.token, "Konstruktor default tidak menerima argumen.")
+            akhir
         akhir
 
         kembali instance
@@ -245,10 +240,12 @@ kelas Fungsi maka
     biar adalah_inisiasi
 
     fungsi init(deklarasi, penutup, adalah_inisiasi) maka
-        ini.deklarasi = deklarasi
-        ini.penutup = penutup
-        ini.adalah_inisiasi = adalah_inisiasi
-        jika ini.adalah_inisiasi == nil maka ini.adalah_inisiasi = salah akhir
+        ubah ini.deklarasi = deklarasi
+        ubah ini.penutup = penutup
+        ubah ini.adalah_inisiasi = adalah_inisiasi
+        jika ini.adalah_inisiasi == nil maka
+            ubah ini.adalah_inisiasi = salah
+        akhir
     akhir
 
     fungsi bind(instance) maka
@@ -267,32 +264,28 @@ kelas Fungsi maka
         selama i < panjang(argumen) maka
             biar nama_param = ini.deklarasi.parameter[i].nilai
             lingkungan_fungsi.definisi(nama_param, argumen[i])
-            i = i + 1
+            ubah i = i + 1
         akhir
 
         tambah(interpreter.call_stack, "fungsi dipanggil")
 
-        # Simulasi try-catch-finally untuk stack pop
         biar hasil = nil
-        coba maka
+        coba
             tunggu interpreter._eksekusi_blok(ini.deklarasi.badan, lingkungan_fungsi)
-        tangkap e maka
-            # Tangkap NilaiKembalian
+        tangkap e
             jika jenis(e) == NilaiKembalian maka
-                hasil = e.nilai
+                ubah hasil = e.nilai
                 jika ini.adalah_inisiasi maka
-                     # Token dummy untuk ambil 'ini'
                      biar tok = T.Token(T.NAMA, "ini", 0, 0)
-                     hasil = ini.penutup.dapatkan(tok)
+                     ubah hasil = ini.penutup.dapatkan(tok)
                 akhir
             lain
-                # Re-throw jika bukan return
-                kurang(interpreter.call_stack) # Pop manual karena finally mungkin beda di Morph
+                kurang(interpreter.call_stack)
                 lemparkan e
             akhir
         akhir
 
-        kurang(interpreter.call_stack) # Pop stack
+        kurang(interpreter.call_stack)
 
         jika ini.adalah_inisiasi maka
              biar tok = T.Token(T.NAMA, "ini", 0, 0)

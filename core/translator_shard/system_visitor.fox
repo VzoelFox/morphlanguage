@@ -1,17 +1,18 @@
 # core/translator_shard/system_visitor.fox
 # Visitor untuk sistem (modul, kelas, tipe)
 
-ambil_semua "core/morph_t.fox" sebagai T
-ambil_semua "core/absolute_syntax_morph.fox" sebagai AST
-ambil_semua "core/translator_shard/runtime.fox" sebagai RT
-ambil_semua "core/translator_shard/statement_visitor.fox" sebagai SV
+ambil_semua "../morph_t.fox" sebagai T
+ambil_semua "../absolute_syntax_morph.fox" sebagai AST
+ambil_semua "runtime.fox" sebagai RT
+ambil_semua "statement_visitor.fox"
+ambil_sebagian tambah, panjang dari "../cotc(stdlib)/core.fox"
 
-kelas SystemVisitor warisi SV.StatementVisitor maka
+kelas SystemVisitor warisi StatementVisitor maka
 
     asink fungsi kunjungi_Kelas(node) maka
         biar superkelas = nil
         jika node.superkelas != nil maka
-            superkelas = tunggu ini._evaluasi(node.superkelas)
+            ubah superkelas = tunggu ini._evaluasi(node.superkelas)
             jika jenis(superkelas) != RT.MorphKelas maka
                 lemparkan RT.KesalahanTipe(node.superkelas.token, "Superkelas harus berupa sebuah kelas.")
             akhir
@@ -20,7 +21,7 @@ kelas SystemVisitor warisi SV.StatementVisitor maka
         ini.lingkungan.definisi(node.nama.nilai, nil)
         biar lingkungan_kelas = ini.lingkungan
         jika superkelas != nil maka
-            lingkungan_kelas = RT.Lingkungan(ini.lingkungan)
+            ubah lingkungan_kelas = RT.Lingkungan(ini.lingkungan)
             lingkungan_kelas.definisi("induk", superkelas)
         akhir
 
@@ -30,16 +31,15 @@ kelas SystemVisitor warisi SV.StatementVisitor maka
             biar metode_node = node.metode[i]
             biar adalah_inisiasi = (metode_node.nama.nilai == "inisiasi")
 
-            # Cek tipe fungsi async vs sync
             biar fungsi_obj = nil
             jika jenis(metode_node) == AST.FungsiAsinkDeklarasi maka
-                fungsi_obj = RT.FungsiAsink(metode_node, lingkungan_kelas, adalah_inisiasi)
+                ubah fungsi_obj = RT.FungsiAsink(metode_node, lingkungan_kelas, adalah_inisiasi)
             lain
-                fungsi_obj = RT.Fungsi(metode_node, lingkungan_kelas, adalah_inisiasi)
+                ubah fungsi_obj = RT.Fungsi(metode_node, lingkungan_kelas, adalah_inisiasi)
             akhir
 
-            metode[metode_node.nama.nilai] = fungsi_obj
-            i = i + 1
+            ubah metode[metode_node.nama.nilai] = fungsi_obj
+            ubah i = i + 1
         akhir
 
         biar kelas_obj = RT.MorphKelas(node.nama.nilai, superkelas, metode)
@@ -58,13 +58,10 @@ kelas SystemVisitor warisi SV.StatementVisitor maka
             biar aritas = panjang(varian_node.parameter)
 
             biar konstruktor = RT.KonstruktorVarian(nama_varian, aritas)
-            tipe_varian.konstruktor[nama_varian] = konstruktor
-
-            # Cek redeclare
-            # jika ini.lingkungan.nilai.punya(nama_varian) ... error handling
+            ubah tipe_varian.konstruktor[nama_varian] = konstruktor
 
             ini.lingkungan.definisi(nama_varian, konstruktor)
-            i = i + 1
+            ubah i = i + 1
         akhir
     akhir
 
@@ -79,18 +76,12 @@ kelas SystemVisitor warisi SV.StatementVisitor maka
     akhir
 
     asink fungsi kunjungi_AmbilSemua(node) maka
-        # Memanggil module loader (asumsi ada di interpreter)
         biar exports = tunggu ini.module_loader.load_module(node.path_file, ini.current_file)
 
         jika node.alias != nil maka
             ini.lingkungan.definisi(node.alias.nilai, exports)
         lain
-            # Loop exports keys (perlu mekanisme iterasi dictionary)
-            # Asumsi: exports adalah dictionary
-            # Morph belum ada standar iterasi dict di syntax contoh?
             # TODO: Implementasi iterasi dict yang benar
-
-            # Placeholder agar parseable
             tulis("Peringatan: Iterasi exports di AmbilSemua belum didukung sepenuhnya.")
         akhir
     akhir
@@ -108,14 +99,16 @@ kelas SystemVisitor warisi SV.StatementVisitor maka
             akhir
 
             ini.lingkungan.definisi(nama, exports[nama])
-            i = i + 1
+            ubah i = i + 1
         akhir
     akhir
 
     asink fungsi kunjungi_Pinjam(node) maka
         biar module_path = node.path_file.nilai
         biar alias = nil
-        jika node.alias != nil maka alias = node.alias.nilai akhir
+        jika node.alias != nil maka
+            ubah alias = node.alias.nilai
+        akhir
 
         jika alias == nil maka
             lemparkan RT.KesalahanRuntime(node.path_file, "FFI import harus pakai alias.")
