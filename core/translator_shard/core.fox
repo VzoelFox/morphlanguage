@@ -1,1 +1,227 @@
-ini contoh
+# core/translator_shard/core.fox
+# Penerjemah Utama
+
+ambil_semua "core/morph_t.fox" sebagai T
+ambil_semua "core/absolute_syntax_morph.fox" sebagai AST
+ambil_semua "core/translator_shard/runtime.fox" sebagai RT
+ambil_semua "core/translator_shard/system_visitor.fox" sebagai SV
+ambil_sebagian tambah dari "core/cotc(stdlib)/core.fox"
+# ambil_sebagian ModuleLoader dari "core/modules.fox" (Stub)
+# ambil_sebagian FFIBridge dari "core/ffi.fox" (Stub)
+
+# Placeholder untuk ModuleLoader dan FFIBridge jika belum ada
+kelas ModuleLoader maka
+    biar interpreter
+    biar _loading_stack
+    fungsi init(interpreter) maka
+        ini.interpreter = interpreter
+        ini._loading_stack = []
+    akhir
+    asink fungsi load_module(path, current) maka
+        # TODO: Implementasi load module
+        kembali {}
+    akhir
+akhir
+
+kelas FFIBridge maka
+    fungsi import_module(path, token) maka kembali nil akhir
+    fungsi python_to_morph(obj) maka kembali nil akhir
+    fungsi morph_to_python(obj) maka kembali nil akhir
+    fungsi safe_call(obj, args, token) maka kembali nil akhir
+akhir
+
+kelas Penerjemah warisi SV.SystemVisitor maka
+    biar formatter
+    biar output_stream
+    biar call_stack
+    biar current_file
+    biar module_loader
+    biar ffi_bridge
+    biar runtime
+    biar batas_rekursi
+    biar tingkat_rekursi
+    biar batas_loop
+    biar lingkungan_global
+
+    # Warisan field dari visitor chain (lingkungan)
+    # Di Morph init induk harus dipanggil manual jika override?
+
+    fungsi init(formatter, output_stream) maka
+        # Setup lingkungan global
+        ini.lingkungan_global = RT.Lingkungan(nil)
+        ini.lingkungan = ini.lingkungan_global
+
+        ini.formatter = formatter
+        ini.output_stream = output_stream
+        ini.call_stack = []
+        ini.current_file = nil
+        ini.module_loader = ModuleLoader(ini)
+        ini.ffi_bridge = FFIBridge()
+        ini.runtime = nil
+        ini.batas_rekursi = 800
+        ini.tingkat_rekursi = 0
+        ini.batas_loop = 10000
+
+        # Fungsi bawaan
+        ini.lingkungan_global.definisi("baca_json", RT.FungsiBawaan(ini._fungsi_baca_json))
+        ini.lingkungan_global.definisi("tidur", RT.FungsiBawaan(ini._fungsi_tidur))
+    akhir
+
+    fungsi _fungsi_baca_json(argumen) maka
+        # Stub
+        kembali {}
+    akhir
+
+    asink fungsi _fungsi_tidur(argumen) maka
+        # Stub
+        kembali nil
+    akhir
+
+    asink fungsi terjemahkan(program, current_file) maka
+        # Reset loading stack (not exposed in stub ModuleLoader yet)
+        ini.current_file = current_file
+        ini.lingkungan = ini.lingkungan_global
+        biar daftar_kesalahan = []
+
+        # AOT Pass (Stubbed)
+        # tunggu ini._jalankan_aot_pass(program)
+
+        coba maka
+            biar i = 0
+            selama i < panjang(program.daftar_pernyataan) maka
+                biar stmt = program.daftar_pernyataan[i]
+                tunggu ini._eksekusi(stmt)
+                i = i + 1
+            akhir
+        tangkap e maka
+            # Tangani error runtime dan ubah ke format laporan
+            tambah(daftar_kesalahan, e)
+        akhir
+
+        kembali daftar_kesalahan
+    akhir
+
+    # Dispatcher manual pengganti patch_ast_nodes + terima()
+    asink fungsi _dispatch(node) maka
+        # Expressions
+        jika jenis(node) == AST.Konstanta maka kembali tunggu ini.kunjungi_Konstanta(node)
+        lainjika jenis(node) == AST.Identitas maka kembali tunggu ini.kunjungi_Identitas(node)
+        lainjika jenis(node) == AST.Daftar maka kembali tunggu ini.kunjungi_Daftar(node)
+        lainjika jenis(node) == AST.Kamus maka kembali tunggu ini.kunjungi_Kamus(node)
+        lainjika jenis(node) == AST.FoxBinary maka kembali tunggu ini.kunjungi_FoxBinary(node)
+        lainjika jenis(node) == AST.FoxUnary maka kembali tunggu ini.kunjungi_FoxUnary(node)
+        lainjika jenis(node) == AST.PanggilFungsi maka kembali tunggu ini.kunjungi_PanggilFungsi(node)
+        lainjika jenis(node) == AST.Akses maka kembali tunggu ini.kunjungi_Akses(node)
+        lainjika jenis(node) == AST.AmbilProperti maka kembali tunggu ini.kunjungi_AmbilProperti(node)
+        lainjika jenis(node) == AST.AturProperti maka kembali tunggu ini.kunjungi_AturProperti(node)
+        lainjika jenis(node) == AST.Ini maka kembali tunggu ini.kunjungi_Ini(node)
+        lainjika jenis(node) == AST.Induk maka kembali tunggu ini.kunjungi_Induk(node)
+        lainjika jenis(node) == AST.Tunggu maka kembali tunggu ini.kunjungi_Tunggu(node)
+        lainjika jenis(node) == AST.Ambil maka kembali tunggu ini.kunjungi_Ambil(node)
+
+        # Statements
+        lainjika jenis(node) == AST.AmbilSemua maka kembali tunggu ini.kunjungi_AmbilSemua(node)
+        lainjika jenis(node) == AST.AmbilSebagian maka kembali tunggu ini.kunjungi_AmbilSebagian(node)
+        lainjika jenis(node) == AST.DeklarasiVariabel maka kembali tunggu ini.kunjungi_DeklarasiVariabel(node)
+        lainjika jenis(node) == AST.Assignment maka kembali tunggu ini.kunjungi_Assignment(node)
+        lainjika jenis(node) == AST.PernyataanEkspresi maka kembali tunggu ini.kunjungi_PernyataanEkspresi(node)
+        lainjika jenis(node) == AST.JikaMaka maka kembali tunggu ini.kunjungi_JikaMaka(node)
+        lainjika jenis(node) == AST.Selama maka kembali tunggu ini.kunjungi_Selama(node)
+        lainjika jenis(node) == AST.Berhenti maka kembali tunggu ini.kunjungi_Berhenti(node)
+        lainjika jenis(node) == AST.Lanjutkan maka kembali tunggu ini.kunjungi_Lanjutkan(node)
+        lainjika jenis(node) == AST.PernyataanKembalikan maka kembali tunggu ini.kunjungi_PernyataanKembalikan(node)
+        lainjika jenis(node) == AST.Tulis maka kembali tunggu ini.kunjungi_Tulis(node)
+
+        # Function/Class
+        lainjika jenis(node) == AST.FungsiDeklarasi maka kembali tunggu ini.kunjungi_FungsiDeklarasi(node)
+        lainjika jenis(node) == AST.FungsiAsinkDeklarasi maka kembali tunggu ini.kunjungi_FungsiAsinkDeklarasi(node)
+        lainjika jenis(node) == AST.Kelas maka kembali tunggu ini.kunjungi_Kelas(node)
+
+        # System/Others
+        lainjika jenis(node) == AST.Pinjam maka kembali tunggu ini.kunjungi_Pinjam(node)
+        lainjika jenis(node) == AST.Jodohkan maka kembali tunggu ini.kunjungi_Jodohkan(node)
+        lainjika jenis(node) == AST.Pilih maka kembali tunggu ini.kunjungi_Pilih(node)
+        lainjika jenis(node) == AST.CobaTangkap maka kembali tunggu ini.kunjungi_CobaTangkap(node)
+        lainjika jenis(node) == AST.Lemparkan maka
+            # Implementasi kunjungi_Lemparkan (mungkin terlewat di statement visitor?)
+            biar msg = tunggu ini._evaluasi(node.ekspresi)
+            lemparkan RT.KesalahanRuntime(node.ekspresi.token, msg)
+        lainjika jenis(node) == AST.TipeDeklarasi maka kembali tunggu ini.kunjungi_TipeDeklarasi(node)
+
+        lain
+            tulis("Node tidak dikenal: ", node)
+            kembali nil
+        akhir
+    akhir
+
+    asink fungsi _eksekusi(pernyataan) maka
+        # _periksa_keamanan_eksekusi()
+        tunggu ini._dispatch(pernyataan)
+    akhir
+
+    asink fungsi _evaluasi(ekspresi) maka
+        coba maka
+            kembali tunggu ini._dispatch(ekspresi)
+        tangkap e maka
+            # Tambahkan info node ke error jika belum ada
+            jika e.node == nil maka e.node = ekspresi akhir
+            lemparkan e
+        akhir
+    akhir
+
+    asink fungsi _eksekusi_blok(bagian, lingkungan_blok) maka
+        biar lingkungan_sebelumnya = ini.lingkungan
+        ini.lingkungan = lingkungan_blok
+        coba maka
+            tunggu ini.kunjungi_Bagian(bagian)
+        akhirnya maka
+            ini.lingkungan = lingkungan_sebelumnya
+        akhir
+    akhir
+
+    asink fungsi _evaluasi_dalam_lingkungan(ekspresi, lingkungan) maka
+        biar lingkungan_sebelumnya = ini.lingkungan
+        ini.lingkungan = lingkungan
+        coba maka
+            kembali tunggu ini._evaluasi(ekspresi)
+        akhirnya maka
+            ini.lingkungan = lingkungan_sebelumnya
+        akhir
+    akhir
+
+    fungsi _ke_string(obj) maka
+        jika obj == nil maka kembali "nil" akhir
+        jika obj == benar maka kembali "benar" akhir
+        jika obj == salah maka kembali "salah" akhir
+        # return str(obj) equivalent
+        kembali "" + obj
+    akhir
+
+    fungsi _apakah_benar(obj) maka
+        jika obj == nil maka kembali salah akhir
+        jika obj == salah maka kembali salah akhir
+        kembali benar
+    akhir
+
+    asink fungsi _pola_cocok(pola, nilai, lingkungan) maka
+        # Implementasi Pattern Matching (Jodohkan)
+        jika jenis(pola) == AST.PolaWildcard maka
+            kembali [benar, lingkungan]
+        akhir
+
+        jika jenis(pola) == AST.PolaLiteral maka
+            biar nilai_pola = tunggu ini._evaluasi(pola.nilai)
+            kembali [nilai == nilai_pola, lingkungan]
+        akhir
+
+        jika jenis(pola) == AST.PolaIkatanVariabel maka
+            lingkungan.definisi(pola.token.nilai, nilai)
+            kembali [benar, lingkungan]
+        akhir
+
+        # ... Implementasi PolaVarian, PolaDaftar ...
+
+        kembali [salah, lingkungan]
+    akhir
+
+akhir

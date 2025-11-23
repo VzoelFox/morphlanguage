@@ -1,1 +1,310 @@
-ini lexer
+# core/lx_morph.fox
+# Lexer Morph yang ditulis dalam Morph
+
+ambil_semua "core/morph_t.fox" sebagai T
+ambil_sebagian panjang, tambah, gabung, float, int dari "core/cotc(stdlib)/core.fox"
+# Asumsi: stdlib menyediakan fungsi dasar seperti panjang, tambah (append), gabung (join), float, int.
+# Jika tidak, kita mungkin perlu menyesuaikan.
+
+kelas Leksikal maka
+    biar sumber
+    biar nama_file
+    biar tokens
+    biar awal
+    biar saat_ini
+    biar baris
+    biar kolom
+    biar daftar_kesalahan
+    biar baris_awal_token
+    biar kolom_awal_token
+
+    fungsi init(sumber, nama_file) maka
+        ini.sumber = sumber
+        # Jika nama_file tidak diberikan, gunakan default
+        jika nama_file == nil maka
+            ini.nama_file = "<sumber>"
+        lain
+            ini.nama_file = nama_file
+        akhir
+
+        ini.tokens = []
+        ini.awal = 0
+        ini.saat_ini = 0
+        ini.baris = 1
+        ini.kolom = 1
+        ini.daftar_kesalahan = []
+        ini.baris_awal_token = 1
+        ini.kolom_awal_token = 1
+    akhir
+
+    fungsi buat_token() maka
+        selama tidak ini._di_akhir() maka
+            ini.awal = ini.saat_ini
+            ini.baris_awal_token = ini.baris
+            ini.kolom_awal_token = ini.kolom
+            ini._pindai_token()
+        akhir
+
+        # EOF Token
+        tambah(ini.tokens, T.Token(T.ADS, nil, ini.baris, ini.kolom))
+        kembali [ini.tokens, ini.daftar_kesalahan]
+    akhir
+
+    fungsi _di_akhir() maka
+        kembali ini.saat_ini >= panjang(ini.sumber)
+    akhir
+
+    fungsi _maju() maka
+        biar char = ini.sumber[ini.saat_ini]
+        ini.saat_ini = ini.saat_ini + 1
+        jika char == "\n" maka
+            ini.baris = ini.baris + 1
+            ini.kolom = 1
+        lain
+            ini.kolom = ini.kolom + 1
+        akhir
+        kembali char
+    akhir
+
+    fungsi _cocok(diharapkan) maka
+        jika ini._di_akhir() maka
+            kembali salah
+        akhir
+        jika ini.sumber[ini.saat_ini] != diharapkan maka
+            kembali salah
+        akhir
+        ini.saat_ini = ini.saat_ini + 1
+        ini.kolom = ini.kolom + 1
+        kembali benar
+    akhir
+
+    fungsi _intip() maka
+        jika ini._di_akhir() maka
+            kembali nil # Representasi \0
+        akhir
+        kembali ini.sumber[ini.saat_ini]
+    akhir
+
+    fungsi _intip_berikutnya() maka
+        jika ini.saat_ini + 1 >= panjang(ini.sumber) maka
+            kembali nil
+        akhir
+        kembali ini.sumber[ini.saat_ini + 1]
+    akhir
+
+    fungsi _tambah_token(tipe, nilai_literal) maka
+        # nilai_literal defaultnya nil jika tidak dikirim (ditangani caller)
+        # Tapi di Morph kita tidak punya default parameter value di deklarasi,
+        # jadi kita cek nil.
+
+        jika nilai_literal == nil maka
+            biar teks = ini.sumber[ini.awal : ini.saat_ini]
+            nilai_literal = teks
+        akhir
+
+        tambah(ini.tokens, T.Token(tipe, nilai_literal, ini.baris_awal_token, ini.kolom_awal_token))
+    akhir
+
+    fungsi _catat_kesalahan(pesan) maka
+        biar info_kesalahan = {
+            "pesan": pesan,
+            "baris": ini.baris,
+            "kolom": ini.kolom,
+            "file": ini.nama_file
+        }
+        tambah(ini.daftar_kesalahan, info_kesalahan)
+    akhir
+
+    fungsi _pindai_token() maka
+        biar char = ini._maju()
+
+        jika char == " " atau char == "\r" atau char == "\t" maka
+            # Abaikan whitespace
+            kembali
+        lainjika char == "\n" maka
+            ini._tambah_token(T.AKHIR_BARIS, nil)
+        lainjika char == "(" maka ini._tambah_token(T.KURUNG_BUKA, nil)
+        lainjika char == ")" maka ini._tambah_token(T.KURUNG_TUTUP, nil)
+        lainjika char == "{" maka ini._tambah_token(T.KURAWAL_BUKA, nil)
+        lainjika char == "}" maka ini._tambah_token(T.KURAWAL_TUTUP, nil)
+        lainjika char == "[" maka ini._tambah_token(T.SIKU_BUKA, nil)
+        lainjika char == "]" maka ini._tambah_token(T.SIKU_TUTUP, nil)
+        lainjika char == "|" maka ini._tambah_token(T.GARIS_PEMISAH, nil)
+        lainjika char == "," maka ini._tambah_token(T.KOMA, nil)
+        lainjika char == "." maka
+            jika ini._intip() == "." dan ini._intip_berikutnya() == "." maka
+                ini._maju()
+                ini._maju()
+                ini._tambah_token(T.TITIK_TIGA, nil)
+            lain
+                ini._tambah_token(T.TITIK, nil)
+            akhir
+        lainjika char == ";" maka ini._tambah_token(T.TITIK_KOMA, nil)
+        lainjika char == ":" maka ini._tambah_token(T.TITIK_DUA, nil)
+        lainjika char == "-" maka ini._tambah_token(T.KURANG, nil)
+        lainjika char == "+" maka ini._tambah_token(T.TAMBAH, nil)
+        lainjika char == "*" maka ini._tambah_token(T.KALI, nil)
+        lainjika char == "/" maka
+            jika ini._cocok("/") maka
+                # Komentar
+                selama ini._intip() != "\n" dan tidak ini._di_akhir() maka
+                    ini._maju()
+                akhir
+            lain
+                ini._tambah_token(T.BAGI, nil)
+            akhir
+        lainjika char == "^" maka ini._tambah_token(T.PANGKAT, nil)
+        lainjika char == "%" maka ini._tambah_token(T.MODULO, nil)
+        lainjika char == "!" maka
+            jika ini._cocok("=") maka
+                ini._tambah_token(T.TIDAK_SAMA, nil)
+            lain
+                ini._tambah_token(T.TIDAK, nil)
+            akhir
+        lainjika char == "=" maka
+            jika ini._cocok("=") maka
+                ini._tambah_token(T.SAMA_DENGAN, nil)
+            lain
+                ini._tambah_token(T.SAMADENGAN, nil)
+            akhir
+        lainjika char == "<" maka
+            jika ini._cocok("=") maka
+                ini._tambah_token(T.KURANG_SAMA, nil)
+            lain
+                ini._tambah_token(T.KURANG_DARI, nil)
+            akhir
+        lainjika char == ">" maka
+            jika ini._cocok("=") maka
+                ini._tambah_token(T.LEBIH_SAMA, nil)
+            lain
+                ini._tambah_token(T.LEBIH_DARI, nil)
+            akhir
+        lainjika char == "#" maka
+            selama ini._intip() != "\n" dan tidak ini._di_akhir() maka
+                ini._maju()
+            akhir
+        lainjika char == "\"" atau char == "'" maka
+            ini._teks(char)
+        lainjika ini._is_digit(char) maka
+            ini._angka()
+        lainjika ini._is_alpha(char) maka
+            ini._nama()
+        lain
+            ini._catat_kesalahan("Karakter tidak dikenal: " + char)
+            ini._tambah_token(T.TIDAK_DIKENAL, nil)
+        akhir
+    akhir
+
+    fungsi _teks(pembatas) maka
+        biar start_baris = ini.baris
+        biar nilai_karakter = []
+
+        selama ini._intip() != pembatas dan tidak ini._di_akhir() maka
+            jika ini._intip() == "\n" maka
+                ini._maju()
+                tambah(nilai_karakter, "\n")
+                lanjutkan
+            akhir
+
+            biar karakter = ini._maju()
+            jika karakter == "\\" maka
+                jika ini._di_akhir() maka
+                    ini._catat_kesalahan("Teks tidak ditutup setelah escape character.")
+                    berhenti
+                akhir
+
+                biar karakter_berikutnya = ini._maju()
+                # peta_escape manual
+                jika karakter_berikutnya == "n" maka tambah(nilai_karakter, "\n")
+                lainjika karakter_berikutnya == "t" maka tambah(nilai_karakter, "\t")
+                lainjika karakter_berikutnya == "\"" maka tambah(nilai_karakter, "\"")
+                lainjika karakter_berikutnya == "\\" maka tambah(nilai_karakter, "\\")
+                lain
+                    tambah(nilai_karakter, "\\" + karakter_berikutnya)
+                akhir
+            lain
+                tambah(nilai_karakter, karakter)
+            akhir
+        akhir
+
+        jika ini._di_akhir() maka
+            ini._catat_kesalahan("Teks tidak ditutup.")
+            kembali
+        akhir
+
+        ini._maju() # Konsumsi kutip penutup
+
+        biar nilai_final = gabung(nilai_karakter, "")
+        ini._tambah_token(T.TEKS, nilai_final)
+    akhir
+
+    fungsi _angka() maka
+        selama ini._is_digit(ini._intip()) maka
+            ini._maju()
+        akhir
+
+        jika ini._intip() == "." dan ini._is_digit(ini._intip_berikutnya()) maka
+            ini._maju()
+            selama ini._is_digit(ini._intip()) maka
+                ini._maju()
+            akhir
+        akhir
+
+        biar nilai_str = ini.sumber[ini.awal : ini.saat_ini]
+        # Kita asumsikan ada fungsi konversi global atau metode string
+        # Disini kita simpan sebagai string dulu atau coba konversi jika Morph mendukung
+
+        # Simulasi konversi (tergantung kapabilitas stdlib Morph)
+        # Untuk sekarang kita simpan sebagai nilai asli jika bisa, atau string
+        # ini._tambah_token(T.ANGKA, float(nilai_str))
+
+        ini._tambah_token(T.ANGKA, nilai_str) # Simpan stringnya untuk diproses nanti oleh parser/evaluator jika perlu
+    akhir
+
+    fungsi _nama() maka
+        selama ini._is_alpha_numeric(ini._intip()) maka
+            ini._maju()
+        akhir
+
+        biar teks = ini.sumber[ini.awal : ini.saat_ini]
+        biar tipe = T.KATA_KUNCI.dapatkan(teks)
+        # Asumsi dict punya metode `dapatkan` atau akses index aman.
+        # Jika pakai index biasa T.KATA_KUNCI[teks] mungkin error jika key tak ada.
+        # Alternatif:
+
+        jika T.KATA_KUNCI.punya(teks) maka
+            tipe = T.KATA_KUNCI[teks]
+        lain
+            tipe = nil
+        akhir
+
+        jika tipe == nil maka
+            tipe = T.NAMA
+        akhir
+
+        jika tipe == T.BENAR maka
+            ini._tambah_token(tipe, benar)
+        lainjika tipe == T.SALAH maka
+            ini._tambah_token(tipe, salah)
+        lainjika tipe == T.NIL maka
+            ini._tambah_token(tipe, nil)
+        lain
+            ini._tambah_token(tipe, nil)
+        akhir
+    akhir
+
+    fungsi _is_digit(char) maka
+        jika char == nil maka kembali salah akhir
+        kembali char >= "0" dan char <= "9"
+    akhir
+
+    fungsi _is_alpha(char) maka
+        jika char == nil maka kembali salah akhir
+        kembali (char >= "a" dan char <= "z") atau (char >= "A" dan char <= "Z") atau char == "_"
+    akhir
+
+    fungsi _is_alpha_numeric(char) maka
+        kembali ini._is_alpha(char) atau ini._is_digit(char)
+    akhir
+
+akhir

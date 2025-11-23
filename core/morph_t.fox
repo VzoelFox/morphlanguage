@@ -1,1 +1,175 @@
-ini morph token
+# core/morph_t.fox
+# Fondasi untuk "Kelahiran Kembali MORPH"
+# Mendefinisikan struktur data Token dan tipe-tipe token.
+
+# Penanda Akhir File
+biar ADS = "ADS" # Akhir Dari Segalanya
+
+# Tipe Literal
+biar TEKS = "TEKS"
+biar ANGKA = "ANGKA"
+biar NAMA = "NAMA"
+
+# Operator Aritmatika
+biar TAMBAH = "TAMBAH"        # +
+biar KURANG = "KURANG"        # -
+biar KALI = "KALI"            # *
+biar BAGI = "BAGI"            # /
+biar PANGKAT = "PANGKAT"      # ^
+biar MODULO = "MODULO"        # %
+
+# Operator Perbandingan
+biar SAMA_DENGAN = "SAMA_DENGAN"   # ==
+biar TIDAK_SAMA = "TIDAK_SAMA"     # !=
+biar KURANG_DARI = "KURANG_DARI"   # <
+biar LEBIH_DARI = "LEBIH_DARI"     # >
+biar KURANG_SAMA = "KURANG_SAMA"   # <=
+biar LEBIH_SAMA = "LEBIH_SAMA"     # >=
+
+# Operator Logika
+biar DAN = "DAN"           # dan
+biar ATAU = "ATAU"         # atau
+biar TIDAK = "TIDAK"       # tidak
+
+# Tanda Baca & Simbol
+biar TITIK_KOMA = "TITIK_KOMA"    # ;
+biar KOMA = "KOMA"                # ,
+biar TITIK_DUA = "TITIK_DUA"      # :
+biar TITIK = "TITIK"              # .
+biar TITIK_TIGA = "TITIK_TIGA"    # ...
+biar TANDA_PANAH = "TANDA_PANAH"  # ->
+
+biar KURUNG_BUKA = "KURUNG_BUKA"   # (
+biar KURUNG_TUTUP = "KURUNG_TUTUP" # )
+biar KURAWAL_BUKA = "KURAWAL_BUKA" # {
+biar KURAWAL_TUTUP = "KURAWAL_TUTUP" # }
+biar SIKU_BUKA = "SIKU_BUKA"       # [
+biar SIKU_TUTUP = "SIKU_TUTUP"     # ]
+biar GARIS_PEMISAH = "GARIS_PEMISAH" # |
+
+# Penugasan
+biar SAMADENGAN = "SAMADENGAN"    # =
+
+# Kata Kunci (Keywords)
+biar KELAS = "KELAS"
+biar WARISI = "WARISI"
+biar INI = "INI"
+biar INDUK = "INDUK"
+biar TIPE = "TIPE"
+biar BIAR = "BIAR"
+biar TETAP = "TETAP"
+biar UBAH = "UBAH"
+biar FUNGSI = "FUNGSI"
+biar KEMBALI = "KEMBALI"
+biar KEMBALIKAN = "KEMBALIKAN"
+biar JIKA = "JIKA"
+biar MAKA = "MAKA"
+biar LAIN = "LAIN"
+biar LAIN_JIKA = "LAIN_JIKA"
+biar SELAMA = "SELAMA"
+biar PILIH = "PILIH"
+biar KETIKA = "KETIKA"
+biar LAINNYA = "LAINNYA"
+biar BERHENTI = "BERHENTI"
+biar LANJUTKAN = "LANJUTKAN"
+biar AKHIR = "AKHIR"
+biar JODOHKAN = "JODOHKAN"
+biar DENGAN = "DENGAN"
+biar JAGA = "JAGA"
+biar AMBIL = "AMBIL"
+biar TULIS = "TULIS"
+biar PINJAM = "PINJAM"
+biar AMBIL_SEMUA = "AMBIL_SEMUA"
+biar AMBIL_SEBAGIAN = "AMBIL_SEBAGIAN"
+biar DARI = "DARI"
+biar SEBAGAI = "SEBAGAI"
+
+# Kata Kunci Modul (Types for tokens)
+# (Defined above)
+
+# Kata Kunci Error Handling
+biar COBA = "COBA"
+biar TANGKAP = "TANGKAP"
+biar AKHIRNYA = "AKHIRNYA"
+biar LEMPARKAN = "LEMPARKAN"
+biar JENIS = "JENIS"
+
+# Kata Kunci Async
+biar ASINK = "ASINK"
+biar TUNGGU = "TUNGGU"
+
+# Compiler Hint
+biar AOT = "AOT"
+
+# Nilai Bawaan
+biar BENAR = "BENAR"
+biar SALAH = "SALAH"
+biar NIL = "NIL"
+
+# Lain-lain
+biar AKHIR_BARIS = "AKHIR_BARIS"
+biar TIDAK_DIKENAL = "TIDAK_DIKENAL"
+
+kelas Token maka
+    biar tipe
+    biar nilai
+    biar baris
+    biar kolom
+
+    fungsi init(tipe, nilai, baris, kolom) maka
+        ini.tipe = tipe
+        ini.nilai = nilai
+        ini.baris = baris
+        ini.kolom = kolom
+    akhir
+akhir
+
+# Membuat pemetaan dari kata kunci string ke TipeToken
+biar KATA_KUNCI = {
+    "kelas": KELAS,
+    "warisi": WARISI,
+    "ini": INI,
+    "induk": INDUK,
+    "tipe": TIPE,
+    "biar": BIAR,
+    "tetap": TETAP,
+    "ubah": UBAH,
+    "fungsi": FUNGSI,
+    "kembali": KEMBALI,
+    "kembalikan": KEMBALIKAN,
+    "jika": JIKA,
+    "maka": MAKA,
+    "lain": LAIN,
+    "lainjika": LAIN_JIKA,
+    "selama": SELAMA,
+    "pilih": PILIH,
+    "ketika": KETIKA,
+    "lainnya": LAINNYA,
+    "berhenti": BERHENTI,
+    "lanjutkan": LANJUTKAN,
+    "akhir": AKHIR,
+    "jodohkan": JODOHKAN,
+    "dengan": DENGAN,
+    "jaga": JAGA,
+    "ambil": AMBIL,
+    "tulis": TULIS,
+    "pinjam": PINJAM,
+    "ambil_semua": AMBIL_SEMUA,
+    "ambil_sebagian": AMBIL_SEBAGIAN,
+    "dari": DARI,
+    "sebagai": SEBAGAI,
+    "benar": BENAR,
+    "salah": SALAH,
+    "nil": NIL,
+    "dan": DAN,
+    "atau": ATAU,
+    "tidak": TIDAK,
+    "asink": ASINK,
+    "tunggu": TUNGGU,
+    "aot": AOT,
+    "coba": COBA,
+    "tangkap": TANGKAP,
+    "akhirnya": AKHIRNYA,
+    "lemparkan": LEMPARKAN,
+    "jenis": JENIS
+}
