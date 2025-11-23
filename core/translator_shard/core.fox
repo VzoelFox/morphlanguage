@@ -1,1 +1,300 @@
-ini contoh
+# core/translator_shard/core.fox
+# Penerjemah Utama
+
+ambil_semua "../morph_t.fox" sebagai T
+ambil_semua "../absolute_syntax_morph.fox" sebagai AST
+ambil_semua "runtime.fox" sebagai RT
+ambil_semua "system_visitor.fox"
+ambil_sebagian tambah, panjang dari "../cotc(stdlib)/core.fox"
+
+kelas ModuleLoader maka
+    fungsi init(interpreter) maka
+        ubah ini.interpreter = interpreter
+        ubah ini._loading_stack = []
+    akhir
+    asink fungsi load_module(path, current) maka
+        kembali {}
+    akhir
+akhir
+
+kelas FFIBridge maka
+    fungsi import_module(path, token) maka
+        kembali nil
+    akhir
+    fungsi python_to_morph(obj) maka
+        kembali nil
+    akhir
+    fungsi morph_to_python(obj) maka
+        kembali nil
+    akhir
+    fungsi safe_call(obj, args, token) maka
+        kembali nil
+    akhir
+akhir
+
+kelas PenerjemahCore warisi SystemVisitor maka
+    fungsi init(formatter, output_stream) maka
+        ubah ini.lingkungan_global = RT.Lingkungan(nil)
+        ubah ini.lingkungan = ini.lingkungan_global
+
+        ubah ini.formatter = formatter
+        ubah ini.output_stream = output_stream
+        ubah ini.call_stack = []
+        ubah ini.current_file = nil
+        ubah ini.module_loader = ModuleLoader(ini)
+        ubah ini.ffi_bridge = FFIBridge()
+        ubah ini.runtime = nil
+        ubah ini.batas_rekursi = 800
+        ubah ini.tingkat_rekursi = 0
+        ubah ini.batas_loop = 10000
+
+        ini.lingkungan_global.definisi("baca_json", RT.FungsiBawaan(ini._fungsi_baca_json))
+        ini.lingkungan_global.definisi("tidur", RT.FungsiBawaan(ini._fungsi_tidur))
+    akhir
+
+    fungsi _fungsi_baca_json(argumen) maka
+        kembali {}
+    akhir
+
+    asink fungsi _fungsi_tidur(argumen) maka
+        kembali nil
+    akhir
+
+    asink fungsi terjemahkan(program, current_file) maka
+        ubah ini.current_file = current_file
+        ubah ini.lingkungan = ini.lingkungan_global
+        biar daftar_kesalahan = []
+
+        coba
+            biar i = 0
+            selama i < panjang(program.daftar_pernyataan) maka
+                biar stmt = program.daftar_pernyataan[i]
+                tunggu ini._eksekusi(stmt)
+                ubah i = i + 1
+            akhir
+        tangkap e
+            tambah(daftar_kesalahan, e)
+        akhir
+
+        kembali daftar_kesalahan
+    akhir
+
+    asink fungsi _dispatch(node) maka
+        jika jenis(node) == AST.Konstanta maka
+            kembali tunggu ini.kunjungi_Konstanta(node)
+        lain
+            jika jenis(node) == AST.Identitas maka
+                kembali tunggu ini.kunjungi_Identitas(node)
+            lain
+                jika jenis(node) == AST.Daftar maka
+                    kembali tunggu ini.kunjungi_Daftar(node)
+                lain
+                    jika jenis(node) == AST.Kamus maka
+                        kembali tunggu ini.kunjungi_Kamus(node)
+                    lain
+                        jika jenis(node) == AST.FoxBinary maka
+                            kembali tunggu ini.kunjungi_FoxBinary(node)
+                        lain
+                            jika jenis(node) == AST.FoxUnary maka
+                                kembali tunggu ini.kunjungi_FoxUnary(node)
+                            lain
+                                jika jenis(node) == AST.PanggilFungsi maka
+                                    kembali tunggu ini.kunjungi_PanggilFungsi(node)
+                                lain
+                                    jika jenis(node) == AST.Akses maka
+                                        kembali tunggu ini.kunjungi_Akses(node)
+                                    lain
+                                        jika jenis(node) == AST.AmbilProperti maka
+                                            kembali tunggu ini.kunjungi_AmbilProperti(node)
+                                        lain
+                                            jika jenis(node) == AST.AturProperti maka
+                                                kembali tunggu ini.kunjungi_AturProperti(node)
+                                            lain
+                                                jika jenis(node) == AST.Ini maka
+                                                    kembali tunggu ini.kunjungi_Ini(node)
+                                                lain
+                                                    jika jenis(node) == AST.Induk maka
+                                                        kembali tunggu ini.kunjungi_Induk(node)
+                                                    lain
+                                                        jika jenis(node) == AST.Tunggu maka
+                                                            kembali tunggu ini.kunjungi_Tunggu(node)
+                                                        lain
+                                                            jika jenis(node) == AST.Ambil maka
+                                                                kembali tunggu ini.kunjungi_Ambil(node)
+                                                            lain
+                                                                jika jenis(node) == AST.AmbilSemua maka
+                                                                    kembali tunggu ini.kunjungi_AmbilSemua(node)
+                                                                lain
+                                                                    jika jenis(node) == AST.AmbilSebagian maka
+                                                                        kembali tunggu ini.kunjungi_AmbilSebagian(node)
+                                                                    lain
+                                                                        jika jenis(node) == AST.DeklarasiVariabel maka
+                                                                            kembali tunggu ini.kunjungi_DeklarasiVariabel(node)
+                                                                        lain
+                                                                            jika jenis(node) == AST.Assignment maka
+                                                                                kembali tunggu ini.kunjungi_Assignment(node)
+                                                                            lain
+                                                                                jika jenis(node) == AST.PernyataanEkspresi maka
+                                                                                    kembali tunggu ini.kunjungi_PernyataanEkspresi(node)
+                                                                                lain
+                                                                                    jika jenis(node) == AST.JikaMaka maka
+                                                                                        kembali tunggu ini.kunjungi_JikaMaka(node)
+                                                                                    lain
+                                                                                        jika jenis(node) == AST.Selama maka
+                                                                                            kembali tunggu ini.kunjungi_Selama(node)
+                                                                                        lain
+                                                                                            jika jenis(node) == AST.Berhenti maka
+                                                                                                kembali tunggu ini.kunjungi_Berhenti(node)
+                                                                                            lain
+                                                                                                jika jenis(node) == AST.Lanjutkan maka
+                                                                                                    kembali tunggu ini.kunjungi_Lanjutkan(node)
+                                                                                                lain
+                                                                                                    jika jenis(node) == AST.PernyataanKembalikan maka
+                                                                                                        kembali tunggu ini.kunjungi_PernyataanKembalikan(node)
+                                                                                                    lain
+                                                                                                        jika jenis(node) == AST.Tulis maka
+                                                                                                            kembali tunggu ini.kunjungi_Tulis(node)
+                                                                                                        lain
+                                                                                                            jika jenis(node) == AST.FungsiDeklarasi maka
+                                                                                                                kembali tunggu ini.kunjungi_FungsiDeklarasi(node)
+                                                                                                            lain
+                                                                                                                jika jenis(node) == AST.FungsiAsinkDeklarasi maka
+                                                                                                                    kembali tunggu ini.kunjungi_FungsiAsinkDeklarasi(node)
+                                                                                                                lain
+                                                                                                                    jika jenis(node) == AST.Kelas maka
+                                                                                                                        kembali tunggu ini.kunjungi_Kelas(node)
+                                                                                                                    lain
+                                                                                                                        jika jenis(node) == AST.Pinjam maka
+                                                                                                                            kembali tunggu ini.kunjungi_Pinjam(node)
+                                                                                                                        lain
+                                                                                                                            jika jenis(node) == AST.Jodohkan maka
+                                                                                                                                kembali tunggu ini.kunjungi_Jodohkan(node)
+                                                                                                                            lain
+                                                                                                                                jika jenis(node) == AST.Pilih maka
+                                                                                                                                    kembali tunggu ini.kunjungi_Pilih(node)
+                                                                                                                                lain
+                                                                                                                                    jika jenis(node) == AST.CobaTangkap maka
+                                                                                                                                        kembali tunggu ini.kunjungi_CobaTangkap(node)
+                                                                                                                                    lain
+                                                                                                                                        jika jenis(node) == AST.Lemparkan maka
+                                                                                                                                            biar msg = tunggu ini._evaluasi(node.ekspresi)
+                                                                                                                                            lemparkan RT.KesalahanRuntime(node.ekspresi.token, msg)
+                                                                                                                                        lain
+                                                                                                                                            jika jenis(node) == AST.TipeDeklarasi maka
+                                                                                                                                                kembali tunggu ini.kunjungi_TipeDeklarasi(node)
+                                                                                                                                            lain
+                                                                                                                                                tulis("Node tidak dikenal: ", node)
+                                                                                                                                                kembali nil
+                                                                                                                                            akhir
+                                                                                                                                        akhir
+                                                                                                                                    akhir
+                                                                                                                                akhir
+                                                                                                                            akhir
+                                                                                                                        akhir
+                                                                                                                    akhir
+                                                                                                                akhir
+                                                                                                            akhir
+                                                                                                        akhir
+                                                                                                    akhir
+                                                                                                akhir
+                                                                                            akhir
+                                                                                        akhir
+                                                                                    akhir
+                                                                                akhir
+                                                                            akhir
+                                                                        akhir
+                                                                    akhir
+                                                                akhir
+                                                            akhir
+                                                        akhir
+                                                    akhir
+                                                akhir
+                                            akhir
+                                        akhir
+                                    akhir
+                                akhir
+                            akhir
+                        akhir
+                    akhir
+                akhir
+            akhir
+        akhir
+    akhir
+
+    asink fungsi _eksekusi(pernyataan) maka
+        tunggu ini._dispatch(pernyataan)
+    akhir
+
+    asink fungsi _evaluasi(ekspresi) maka
+        coba
+            kembali tunggu ini._dispatch(ekspresi)
+        tangkap e
+            jika e.node == nil maka
+                ubah e.node = ekspresi
+            akhir
+            lemparkan e
+        akhir
+    akhir
+
+    asink fungsi _eksekusi_blok(bagian, lingkungan_blok) maka
+        biar lingkungan_sebelumnya = ini.lingkungan
+        ubah ini.lingkungan = lingkungan_blok
+        coba
+            tunggu ini.kunjungi_Bagian(bagian)
+        akhirnya
+            ubah ini.lingkungan = lingkungan_sebelumnya
+        akhir
+    akhir
+
+    asink fungsi _evaluasi_dalam_lingkungan(ekspresi, lingkungan) maka
+        biar lingkungan_sebelumnya = ini.lingkungan
+        ubah ini.lingkungan = lingkungan
+        coba
+            kembali tunggu ini._evaluasi(ekspresi)
+        akhirnya
+            ubah ini.lingkungan = lingkungan_sebelumnya
+        akhir
+    akhir
+
+    fungsi _ke_string(obj) maka
+        jika obj == nil maka
+            kembali "nil"
+        akhir
+        jika obj == benar maka
+            kembali "benar"
+        akhir
+        jika obj == salah maka
+            kembali "salah"
+        akhir
+        kembali "" + obj
+    akhir
+
+    fungsi _apakah_benar(obj) maka
+        jika obj == nil maka
+            kembali salah
+        akhir
+        jika obj == salah maka
+            kembali salah
+        akhir
+        kembali benar
+    akhir
+
+    asink fungsi _pola_cocok(pola, nilai, lingkungan) maka
+        jika jenis(pola) == AST.PolaWildcard maka
+            kembali [benar, lingkungan]
+        akhir
+
+        jika jenis(pola) == AST.PolaLiteral maka
+            biar nilai_pola = tunggu ini._evaluasi(pola.nilai)
+            kembali [nilai == nilai_pola, lingkungan]
+        akhir
+
+        jika jenis(pola) == AST.PolaIkatanVariabel maka
+            lingkungan.definisi(pola.token.nilai, nilai)
+            kembali [benar, lingkungan]
+        akhir
+
+        kembali [salah, lingkungan]
+    akhir
+
+akhir
