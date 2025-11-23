@@ -4,7 +4,7 @@
 ambil_semua "../morph_t.fox" sebagai T
 ambil_semua "../absolute_syntax_morph.fox" sebagai AST
 ambil_semua "runtime.fox" sebagai RT
-ambil_sebagian tambah, panjang dari "../cotc(stdlib)/core.fox"
+ambil_sebagian tambah, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
 
 kelas ExpressionVisitor maka
 
@@ -16,7 +16,7 @@ kelas ExpressionVisitor maka
     asink fungsi kunjungi_AmbilProperti(node) maka
         biar objek = tunggu ini._evaluasi(node.objek)
 
-        jika jenis(objek) == RT.MorphInstance maka
+        jika tipe_objek(objek) == RT.MorphInstance maka
             biar adalah_akses_internal = salah
             kembali objek.dapatkan(node.nama, adalah_akses_internal)
         akhir
@@ -28,7 +28,7 @@ kelas ExpressionVisitor maka
         biar adalah_akses_internal = salah
         biar objek = tunggu ini._evaluasi(node.objek)
 
-        jika jenis(objek) != RT.MorphInstance maka
+        jika tipe_objek(objek) != RT.MorphInstance maka
             lemparkan RT.KesalahanTipe(node.nama, "Hanya instance dari kelas yang dapat diatur propertinya.")
         akhir
 
@@ -107,16 +107,16 @@ kelas ExpressionVisitor maka
             ubah i = i + 1
         akhir
 
-        jika jenis(callee) == RT.MorphKelas maka
+        jika tipe_objek(callee) == RT.MorphKelas maka
             kembali tunggu callee.panggil(ini, node)
         lain
-            jika jenis(callee) == RT.Fungsi atau jenis(callee) == RT.FungsiAsink maka
+            jika tipe_objek(callee) == RT.Fungsi atau tipe_objek(callee) == RT.FungsiAsink maka
                 kembali tunggu callee.panggil_metode(ini, argumen, node.token)
             lain
-                jika jenis(callee) == RT.KonstruktorVarian maka
+                jika tipe_objek(callee) == RT.KonstruktorVarian maka
                     kembali callee.panggil(argumen, node.token)
                 lain
-                    jika jenis(callee) == RT.FungsiBawaan atau jenis(callee) == RT.FungsiBawaanAsink maka
+                    jika tipe_objek(callee) == RT.FungsiBawaan atau tipe_objek(callee) == RT.FungsiBawaanAsink maka
                         kembali tunggu callee.panggil(argumen)
                     akhir
                 akhir

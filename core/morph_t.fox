@@ -111,7 +111,7 @@ biar AKHIR_BARIS = "AKHIR_BARIS"
 biar TIDAK_DIKENAL = "TIDAK_DIKENAL"
 
 kelas Token maka
-    fungsi init(tipe, nilai, baris, kolom) maka
+    fungsi inisiasi(tipe, nilai, baris, kolom) maka
         ini.tipe = tipe
         ini.nilai = nilai
         ini.baris = baris

@@ -5,7 +5,7 @@ ambil_semua "../morph_t.fox" sebagai T
 ambil_semua "../absolute_syntax_morph.fox" sebagai AST
 ambil_semua "runtime.fox" sebagai RT
 ambil_semua "system_visitor.fox"
-ambil_sebagian tambah, panjang dari "../cotc(stdlib)/core.fox"
+ambil_sebagian tambah, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
 
 kelas ModuleLoader maka
     fungsi init(interpreter) maka
@@ -80,107 +80,107 @@ kelas PenerjemahCore warisi SystemVisitor maka
     akhir
 
     asink fungsi _dispatch(node) maka
-        jika jenis(node) == AST.Konstanta maka
+        jika tipe_objek(node) == AST.Konstanta maka
             kembali tunggu ini.kunjungi_Konstanta(node)
         lain
-            jika jenis(node) == AST.Identitas maka
+            jika tipe_objek(node) == AST.Identitas maka
                 kembali tunggu ini.kunjungi_Identitas(node)
             lain
-                jika jenis(node) == AST.Daftar maka
+                jika tipe_objek(node) == AST.Daftar maka
                     kembali tunggu ini.kunjungi_Daftar(node)
                 lain
-                    jika jenis(node) == AST.Kamus maka
+                    jika tipe_objek(node) == AST.Kamus maka
                         kembali tunggu ini.kunjungi_Kamus(node)
                     lain
-                        jika jenis(node) == AST.FoxBinary maka
+                        jika tipe_objek(node) == AST.FoxBinary maka
                             kembali tunggu ini.kunjungi_FoxBinary(node)
                         lain
-                            jika jenis(node) == AST.FoxUnary maka
+                            jika tipe_objek(node) == AST.FoxUnary maka
                                 kembali tunggu ini.kunjungi_FoxUnary(node)
                             lain
-                                jika jenis(node) == AST.PanggilFungsi maka
+                                jika tipe_objek(node) == AST.PanggilFungsi maka
                                     kembali tunggu ini.kunjungi_PanggilFungsi(node)
                                 lain
-                                    jika jenis(node) == AST.Akses maka
+                                    jika tipe_objek(node) == AST.Akses maka
                                         kembali tunggu ini.kunjungi_Akses(node)
                                     lain
-                                        jika jenis(node) == AST.AmbilProperti maka
+                                        jika tipe_objek(node) == AST.AmbilProperti maka
                                             kembali tunggu ini.kunjungi_AmbilProperti(node)
                                         lain
-                                            jika jenis(node) == AST.AturProperti maka
+                                            jika tipe_objek(node) == AST.AturProperti maka
                                                 kembali tunggu ini.kunjungi_AturProperti(node)
                                             lain
-                                                jika jenis(node) == AST.Ini maka
+                                                jika tipe_objek(node) == AST.Ini maka
                                                     kembali tunggu ini.kunjungi_Ini(node)
                                                 lain
-                                                    jika jenis(node) == AST.Induk maka
+                                                    jika tipe_objek(node) == AST.Induk maka
                                                         kembali tunggu ini.kunjungi_Induk(node)
                                                     lain
-                                                        jika jenis(node) == AST.Tunggu maka
+                                                        jika tipe_objek(node) == AST.Tunggu maka
                                                             kembali tunggu ini.kunjungi_Tunggu(node)
                                                         lain
-                                                            jika jenis(node) == AST.Ambil maka
+                                                            jika tipe_objek(node) == AST.Ambil maka
                                                                 kembali tunggu ini.kunjungi_Ambil(node)
                                                             lain
-                                                                jika jenis(node) == AST.AmbilSemua maka
+                                                                jika tipe_objek(node) == AST.AmbilSemua maka
                                                                     kembali tunggu ini.kunjungi_AmbilSemua(node)
                                                                 lain
-                                                                    jika jenis(node) == AST.AmbilSebagian maka
+                                                                    jika tipe_objek(node) == AST.AmbilSebagian maka
                                                                         kembali tunggu ini.kunjungi_AmbilSebagian(node)
                                                                     lain
-                                                                        jika jenis(node) == AST.DeklarasiVariabel maka
+                                                                        jika tipe_objek(node) == AST.DeklarasiVariabel maka
                                                                             kembali tunggu ini.kunjungi_DeklarasiVariabel(node)
                                                                         lain
-                                                                            jika jenis(node) == AST.Assignment maka
+                                                                            jika tipe_objek(node) == AST.Assignment maka
                                                                                 kembali tunggu ini.kunjungi_Assignment(node)
                                                                             lain
-                                                                                jika jenis(node) == AST.PernyataanEkspresi maka
+                                                                                jika tipe_objek(node) == AST.PernyataanEkspresi maka
                                                                                     kembali tunggu ini.kunjungi_PernyataanEkspresi(node)
                                                                                 lain
-                                                                                    jika jenis(node) == AST.JikaMaka maka
+                                                                                    jika tipe_objek(node) == AST.JikaMaka maka
                                                                                         kembali tunggu ini.kunjungi_JikaMaka(node)
                                                                                     lain
-                                                                                        jika jenis(node) == AST.Selama maka
+                                                                                        jika tipe_objek(node) == AST.Selama maka
                                                                                             kembali tunggu ini.kunjungi_Selama(node)
                                                                                         lain
-                                                                                            jika jenis(node) == AST.Berhenti maka
+                                                                                            jika tipe_objek(node) == AST.Berhenti maka
                                                                                                 kembali tunggu ini.kunjungi_Berhenti(node)
                                                                                             lain
-                                                                                                jika jenis(node) == AST.Lanjutkan maka
+                                                                                                jika tipe_objek(node) == AST.Lanjutkan maka
                                                                                                     kembali tunggu ini.kunjungi_Lanjutkan(node)
                                                                                                 lain
-                                                                                                    jika jenis(node) == AST.PernyataanKembalikan maka
+                                                                                                    jika tipe_objek(node) == AST.PernyataanKembalikan maka
                                                                                                         kembali tunggu ini.kunjungi_PernyataanKembalikan(node)
                                                                                                     lain
-                                                                                                        jika jenis(node) == AST.Tulis maka
+                                                                                                        jika tipe_objek(node) == AST.Tulis maka
                                                                                                             kembali tunggu ini.kunjungi_Tulis(node)
                                                                                                         lain
-                                                                                                            jika jenis(node) == AST.FungsiDeklarasi maka
+                                                                                                            jika tipe_objek(node) == AST.FungsiDeklarasi maka
                                                                                                                 kembali tunggu ini.kunjungi_FungsiDeklarasi(node)
                                                                                                             lain
-                                                                                                                jika jenis(node) == AST.FungsiAsinkDeklarasi maka
+                                                                                                                jika tipe_objek(node) == AST.FungsiAsinkDeklarasi maka
                                                                                                                     kembali tunggu ini.kunjungi_FungsiAsinkDeklarasi(node)
                                                                                                                 lain
-                                                                                                                    jika jenis(node) == AST.Kelas maka
+                                                                                                                    jika tipe_objek(node) == AST.Kelas maka
                                                                                                                         kembali tunggu ini.kunjungi_Kelas(node)
                                                                                                                     lain
-                                                                                                                        jika jenis(node) == AST.Pinjam maka
+                                                                                                                        jika tipe_objek(node) == AST.Pinjam maka
                                                                                                                             kembali tunggu ini.kunjungi_Pinjam(node)
                                                                                                                         lain
-                                                                                                                            jika jenis(node) == AST.Jodohkan maka
+                                                                                                                            jika tipe_objek(node) == AST.Jodohkan maka
                                                                                                                                 kembali tunggu ini.kunjungi_Jodohkan(node)
                                                                                                                             lain
-                                                                                                                                jika jenis(node) == AST.Pilih maka
+                                                                                                                                jika tipe_objek(node) == AST.Pilih maka
                                                                                                                                     kembali tunggu ini.kunjungi_Pilih(node)
                                                                                                                                 lain
-                                                                                                                                    jika jenis(node) == AST.CobaTangkap maka
+                                                                                                                                    jika tipe_objek(node) == AST.CobaTangkap maka
                                                                                                                                         kembali tunggu ini.kunjungi_CobaTangkap(node)
                                                                                                                                     lain
-                                                                                                                                        jika jenis(node) == AST.Lemparkan maka
+                                                                                                                                        jika tipe_objek(node) == AST.Lemparkan maka
                                                                                                                                             biar msg = tunggu ini._evaluasi(node.ekspresi)
                                                                                                                                             lemparkan RT.KesalahanRuntime(node.ekspresi.token, msg)
                                                                                                                                         lain
-                                                                                                                                            jika jenis(node) == AST.TipeDeklarasi maka
+                                                                                                                                            jika tipe_objek(node) == AST.TipeDeklarasi maka
                                                                                                                                                 kembali tunggu ini.kunjungi_TipeDeklarasi(node)
                                                                                                                                             lain
                                                                                                                                                 tulis("Node tidak dikenal: ", node)
@@ -280,16 +280,16 @@ kelas PenerjemahCore warisi SystemVisitor maka
     akhir
 
     asink fungsi _pola_cocok(pola, nilai, lingkungan) maka
-        jika jenis(pola) == AST.PolaWildcard maka
+        jika tipe_objek(pola) == AST.PolaWildcard maka
             kembali [benar, lingkungan]
         akhir
 
-        jika jenis(pola) == AST.PolaLiteral maka
+        jika tipe_objek(pola) == AST.PolaLiteral maka
             biar nilai_pola = tunggu ini._evaluasi(pola.nilai)
             kembali [nilai == nilai_pola, lingkungan]
         akhir
 
-        jika jenis(pola) == AST.PolaIkatanVariabel maka
+        jika tipe_objek(pola) == AST.PolaIkatanVariabel maka
             lingkungan.definisi(pola.token.nilai, nilai)
             kembali [benar, lingkungan]
         akhir

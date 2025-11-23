@@ -5,7 +5,7 @@ ambil_semua "../morph_t.fox" sebagai T
 ambil_semua "../absolute_syntax_morph.fox" sebagai AST
 ambil_semua "runtime.fox" sebagai RT
 ambil_semua "expression_visitor.fox"
-ambil_sebagian tambah, panjang dari "../cotc(stdlib)/core.fox"
+ambil_sebagian tambah, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
 
 kelas StatementVisitor warisi ExpressionVisitor maka
 
@@ -25,7 +25,7 @@ kelas StatementVisitor warisi ExpressionVisitor maka
         coba
             tunggu ini._eksekusi_blok(node.blok_coba, RT.Lingkungan(ini.lingkungan))
         tangkap e
-            jika jenis(e) == RT.NilaiKembalian atau jenis(e) == RT.BerhentiLoop atau jenis(e) == RT.LanjutkanLoop maka
+            jika tipe_objek(e) == RT.NilaiKembalian atau tipe_objek(e) == RT.BerhentiLoop atau tipe_objek(e) == RT.LanjutkanLoop maka
                 lemparkan e
             akhir
 
@@ -92,18 +92,18 @@ kelas StatementVisitor warisi ExpressionVisitor maka
         biar nilai = tunggu ini._evaluasi(node.nilai)
         biar target = node.target
 
-        jika jenis(target) == AST.Identitas maka
+        jika tipe_objek(target) == AST.Identitas maka
             ini.lingkungan.tetapkan(target.token, nilai)
         lain
-            jika jenis(target) == AST.Akses maka
+            jika tipe_objek(target) == AST.Akses maka
                 biar objek = tunggu ini._evaluasi(target.objek)
                 biar kunci = tunggu ini._evaluasi(target.kunci)
 
                 ubah objek[kunci] = nilai
             lain
-                jika jenis(target) == AST.AmbilProperti maka
+                jika tipe_objek(target) == AST.AmbilProperti maka
                     biar objek = tunggu ini._evaluasi(target.objek)
-                    jika jenis(objek) != RT.MorphInstance maka
+                    jika tipe_objek(objek) != RT.MorphInstance maka
                          lemparkan RT.KesalahanTipe(target.nama, "Hanya properti dari instance kelas yang bisa diubah.")
                     akhir
                     biar adalah_akses_internal = salah
@@ -144,10 +144,10 @@ kelas StatementVisitor warisi ExpressionVisitor maka
             coba
                 tunggu ini._eksekusi_blok(node.badan, RT.Lingkungan(ini.lingkungan))
             tangkap e
-                jika jenis(e) == RT.LanjutkanLoop maka
+                jika tipe_objek(e) == RT.LanjutkanLoop maka
                     lanjutkan
                 lain
-                    jika jenis(e) == RT.BerhentiLoop maka
+                    jika tipe_objek(e) == RT.BerhentiLoop maka
                         berhenti
                     lain
                         lemparkan e

@@ -8,7 +8,6 @@ akhir
 
 fungsi tambah(lst, item) maka
     # Placeholder: Harusnya lst.append(item)
-    # Karena di bootstrap list mutable, kita tidak perlu return list baru, tapi untuk fungsional style kita return.
     kembali lst
 akhir
 
@@ -28,4 +27,9 @@ akhir
 
 fungsi int(val) maka
     kembali 0
+akhir
+
+fungsi tipe_objek(val) maka
+    # Placeholder: type(val)
+    kembali nil
 akhir

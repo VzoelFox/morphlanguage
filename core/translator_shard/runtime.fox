@@ -4,7 +4,7 @@
 
 ambil_semua "../morph_t.fox" sebagai T
 ambil_semua "../absolute_syntax_morph.fox" sebagai AST
-ambil_sebagian tambah, kurang, panjang dari "../cotc(stdlib)/core.fox"
+ambil_sebagian tambah, kurang, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
 
 # Exception khusus untuk menangani alur kontrol
 kelas NilaiKembalian maka
@@ -273,7 +273,7 @@ kelas Fungsi maka
         coba
             tunggu interpreter._eksekusi_blok(ini.deklarasi.badan, lingkungan_fungsi)
         tangkap e
-            jika jenis(e) == NilaiKembalian maka
+            jika tipe_objek(e) == NilaiKembalian maka
                 ubah hasil = e.nilai
                 jika ini.adalah_inisiasi maka
                      biar tok = T.Token(T.NAMA, "ini", 0, 0)
