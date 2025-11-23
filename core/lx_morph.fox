@@ -5,7 +5,7 @@ ambil_semua "morph_t.fox" sebagai T
 ambil_sebagian panjang, tambah, gabung, float, int dari "cotc(stdlib)/core.fox"
 
 kelas Leksikal maka
-    fungsi init(sumber, nama_file) maka
+    fungsi inisiasi(sumber, nama_file) maka
         ini.sumber = sumber
         jika nama_file == nil maka
             ini.nama_file = "<sumber>"

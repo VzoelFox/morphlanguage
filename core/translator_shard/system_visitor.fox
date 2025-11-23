@@ -5,7 +5,7 @@ ambil_semua "../morph_t.fox" sebagai T
 ambil_semua "../absolute_syntax_morph.fox" sebagai AST
 ambil_semua "runtime.fox" sebagai RT
 ambil_semua "statement_visitor.fox"
-ambil_sebagian tambah, panjang dari "../cotc(stdlib)/core.fox"
+ambil_sebagian tambah, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
 
 kelas SystemVisitor warisi StatementVisitor maka
 
@@ -13,7 +13,7 @@ kelas SystemVisitor warisi StatementVisitor maka
         biar superkelas = nil
         jika node.superkelas != nil maka
             ubah superkelas = tunggu ini._evaluasi(node.superkelas)
-            jika jenis(superkelas) != RT.MorphKelas maka
+            jika tipe_objek(superkelas) != RT.MorphKelas maka
                 lemparkan RT.KesalahanTipe(node.superkelas.token, "Superkelas harus berupa sebuah kelas.")
             akhir
         akhir
@@ -32,7 +32,7 @@ kelas SystemVisitor warisi StatementVisitor maka
             biar adalah_inisiasi = (metode_node.nama.nilai == "inisiasi")
 
             biar fungsi_obj = nil
-            jika jenis(metode_node) == AST.FungsiAsinkDeklarasi maka
+            jika tipe_objek(metode_node) == AST.FungsiAsinkDeklarasi maka
                 ubah fungsi_obj = RT.FungsiAsink(metode_node, lingkungan_kelas, adalah_inisiasi)
             lain
                 ubah fungsi_obj = RT.Fungsi(metode_node, lingkungan_kelas, adalah_inisiasi)
