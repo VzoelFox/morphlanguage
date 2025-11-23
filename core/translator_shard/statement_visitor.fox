@@ -1,0 +1,243 @@
+# core/translator_shard/statement_visitor.fox
+# Visitor untuk pernyataan
+
+ambil_semua "core/morph_t.fox" sebagai T
+ambil_semua "core/absolute_syntax_morph.fox" sebagai AST
+ambil_semua "core/translator_shard/runtime.fox" sebagai RT
+ambil_semua "core/translator_shard/expression_visitor.fox" sebagai EV
+
+kelas StatementVisitor warisi EV.ExpressionVisitor maka
+
+    asink fungsi kunjungi_Bagian(node) maka
+        biar i = 0
+        selama i < panjang(node.daftar_pernyataan) maka
+            tunggu ini._eksekusi(node.daftar_pernyataan[i])
+            i = i + 1
+        akhir
+    akhir
+
+    asink fungsi kunjungi_PernyataanEkspresi(node) maka
+        tunggu ini._evaluasi(node.ekspresi)
+    akhir
+
+    asink fungsi kunjungi_CobaTangkap(node) maka
+        coba maka
+            tunggu ini._eksekusi_blok(node.blok_coba, RT.Lingkungan(ini.lingkungan))
+        tangkap e maka
+            # Jangan tangkap sinyal kontrol flow
+            jika jenis(e) == RT.NilaiKembalian atau jenis(e) == RT.BerhentiLoop atau jenis(e) == RT.LanjutkanLoop maka
+                lemparkan e
+            akhir
+
+            biar lingkungan_tangkap = RT.Lingkungan(ini.lingkungan)
+
+            biar ditangkap = salah
+            biar i = 0
+            selama i < panjang(node.daftar_tangkap) maka
+                biar tangkap_node = node.daftar_tangkap[i]
+
+                jika tangkap_node.nama_error != nil maka
+                    lingkungan_tangkap.definisi(tangkap_node.nama_error.nilai, e, salah)
+                akhir
+
+                biar guard_ok = benar
+                jika tangkap_node.kondisi_jaga != nil maka
+                    biar eval_guard = tunggu ini._evaluasi_dalam_lingkungan(tangkap_node.kondisi_jaga, lingkungan_tangkap)
+                    guard_ok = ini._apakah_benar(eval_guard)
+                akhir
+
+                jika guard_ok maka
+                    tunggu ini._eksekusi_blok(tangkap_node.badan, lingkungan_tangkap)
+                    ditangkap = benar
+                    berhenti
+                akhir
+
+                i = i + 1
+            akhir
+
+            jika tidak ditangkap maka
+                lemparkan e
+            akhir
+        akhir
+
+        jika node.blok_akhirnya != nil maka
+             tunggu ini._eksekusi_blok(node.blok_akhirnya, RT.Lingkungan(ini.lingkungan))
+        akhir
+    akhir
+
+    asink fungsi kunjungi_DeklarasiVariabel(node) maka
+        biar nilai = nil
+        jika node.nilai != nil maka
+            nilai = tunggu ini._evaluasi(node.nilai)
+        akhir
+        biar adalah_konstan = (node.jenis_deklarasi.tipe == T.TETAP)
+        ini.lingkungan.definisi(node.nama.nilai, nilai, adalah_konstan)
+    akhir
+
+    asink fungsi kunjungi_Tulis(node) maka
+        # Asumsi ada fungsi 'print' native atau via output_stream
+        biar output = ""
+        biar i = 0
+        selama i < panjang(node.argumen) maka
+            biar val = tunggu ini._evaluasi(node.argumen[i])
+            output = output + ini._ke_string(val)
+            jika i < panjang(node.argumen) - 1 maka
+                output = output + " "
+            akhir
+            i = i + 1
+        akhir
+        tulis(output) # Fungsi native Morph 'tulis'
+    akhir
+
+    asink fungsi kunjungi_Assignment(node) maka
+        biar nilai = tunggu ini._evaluasi(node.nilai)
+        biar target = node.target
+
+        jika jenis(target) == AST.Identitas maka
+            ini.lingkungan.tetapkan(target.token, nilai)
+        lainjika jenis(target) == AST.Akses maka
+            biar objek = tunggu ini._evaluasi(target.objek)
+            biar kunci = tunggu ini._evaluasi(target.kunci)
+
+            # Cek tipe objek (List/Dict)
+            # Asumsi native assignment supports this: objek[kunci] = nilai
+            objek[kunci] = nilai
+
+        lainjika jenis(target) == AST.AmbilProperti maka
+            biar objek = tunggu ini._evaluasi(target.objek)
+            jika jenis(objek) != RT.MorphInstance maka
+                 lemparkan RT.KesalahanTipe(target.nama, "Hanya properti dari instance kelas yang bisa diubah.")
+            akhir
+            biar adalah_akses_internal = salah # TODO: Cek AST.Ini
+            objek.tetapkan(target.nama, nilai, adalah_akses_internal)
+        lain
+            lemparkan RT.KesalahanRuntime(node.target, "Target assignment tidak valid.")
+        akhir
+    akhir
+
+    asink fungsi kunjungi_PernyataanKembalikan(node) maka
+        biar nilai = nil
+        jika node.nilai != nil maka
+            nilai = tunggu ini._evaluasi(node.nilai)
+        akhir
+        lemparkan RT.NilaiKembalian(nilai)
+    akhir
+
+    asink fungsi kunjungi_Berhenti(node) maka
+        lemparkan RT.BerhentiLoop()
+    akhir
+
+    asink fungsi kunjungi_Lanjutkan(node) maka
+        lemparkan RT.LanjutkanLoop()
+    akhir
+
+    asink fungsi kunjungi_Selama(node) maka
+        biar counter = 0
+        biar batas = 10000 # Hardcoded or from config
+
+        selama ini._apakah_benar(tunggu ini._evaluasi(node.kondisi)) maka
+            counter = counter + 1
+            jika counter > batas maka
+                lemparkan RT.KesalahanRuntime(node.token, "Loop melebihi batas iterasi maksimum.")
+            akhir
+
+            coba maka
+                tunggu ini._eksekusi_blok(node.badan, RT.Lingkungan(ini.lingkungan))
+            tangkap (e) {
+                jika jenis(e) == RT.LanjutkanLoop maka
+                    lanjutkan
+                lainjika jenis(e) == RT.BerhentiLoop maka
+                    berhenti
+                lain
+                    lemparkan e
+                akhir
+            }
+        akhir
+    akhir
+
+    asink fungsi kunjungi_JikaMaka(node) maka
+        biar kond = tunggu ini._evaluasi(node.kondisi)
+        jika ini._apakah_benar(kond) maka
+            tunggu ini._eksekusi_blok(node.blok_maka, RT.Lingkungan(ini.lingkungan))
+        lain
+            biar handled = salah
+            # Rantai lain jika
+            biar i = 0
+            selama i < panjang(node.rantai_lain_jika) maka
+                biar pair = node.rantai_lain_jika[i]
+                biar k = tunggu ini._evaluasi(pair[0])
+                jika ini._apakah_benar(k) maka
+                    tunggu ini._eksekusi_blok(pair[1], RT.Lingkungan(ini.lingkungan))
+                    handled = benar
+                    berhenti
+                akhir
+                i = i + 1
+            akhir
+
+            jika tidak handled dan node.blok_lain != nil maka
+                tunggu ini._eksekusi_blok(node.blok_lain, RT.Lingkungan(ini.lingkungan))
+            akhir
+        akhir
+    akhir
+
+    asink fungsi kunjungi_Pilih(node) maka
+        biar nilai_ekspresi = tunggu ini._evaluasi(node.ekspresi)
+        biar kasus_cocok = salah
+
+        biar i = 0
+        selama i < panjang(node.kasus) maka
+            biar kasus = node.kasus[i]
+            # kasus.nilai bisa list ekspresi
+            biar j = 0
+            selama j < panjang(kasus.nilai) maka
+                biar val = tunggu ini._evaluasi(kasus.nilai[j])
+                jika nilai_ekspresi == val maka
+                    tunggu ini._eksekusi_blok(kasus.badan, RT.Lingkungan(ini.lingkungan))
+                    kasus_cocok = benar
+                    berhenti
+                akhir
+                j = j + 1
+            akhir
+
+            jika kasus_cocok maka berhenti akhir
+            i = i + 1
+        akhir
+
+        jika tidak kasus_cocok dan node.kasus_lainnya != nil maka
+            tunggu ini._eksekusi_blok(node.kasus_lainnya.badan, RT.Lingkungan(ini.lingkungan))
+        akhir
+    akhir
+
+    asink fungsi kunjungi_Jodohkan(node) maka
+        biar nilai_ekspresi = tunggu ini._evaluasi(node.ekspresi)
+
+        biar i = 0
+        selama i < panjang(node.kasus) maka
+            biar kasus = node.kasus[i]
+            biar lingkungan_kasus = RT.Lingkungan(ini.lingkungan)
+
+            # _pola_cocok returns [boolean, lingkungan_baru] (simulated tuple) or just modifies env?
+            # In Python: cocok, _ = await self._pola_cocok(..., lingkungan_kasus)
+            # The env is modified in place in Python version.
+
+            biar cocok_result = tunggu ini._pola_cocok(kasus.pola, nilai_ekspresi, lingkungan_kasus)
+            # Asumsi return value struct/list: [cocok, env]
+            biar cocok = cocok_result[0]
+
+            jika cocok maka
+                jika kasus.jaga != nil maka
+                    biar nilai_jaga = tunggu ini._evaluasi_dalam_lingkungan(kasus.jaga, lingkungan_kasus)
+                    jika tidak ini._apakah_benar(nilai_jaga) maka
+                        lanjutkan # Continue outer loop
+                    akhir
+                akhir
+
+                tunggu ini._eksekusi_blok(kasus.badan, lingkungan_kasus)
+                kembali
+            akhir
+
+            i = i + 1
+        akhir
+    akhir
+
+akhir
