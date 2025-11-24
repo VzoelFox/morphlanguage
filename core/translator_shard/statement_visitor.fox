@@ -222,8 +222,8 @@ kelas StatementVisitor warisi ExpressionVisitor maka
             biar cocok = cocok_result[0]
 
             jika cocok maka
-                jika kasus.jaga != nil maka
-                    biar nilai_jaga = tunggu ini._evaluasi_dalam_lingkungan(kasus.jaga, lingkungan_kasus)
+                jika kasus.kondisi_jaga != nil maka
+                    biar nilai_jaga = tunggu ini._evaluasi_dalam_lingkungan(kasus.kondisi_jaga, lingkungan_kasus)
                     jika tidak ini._apakah_benar(nilai_jaga) maka
                         lanjutkan
                     akhir

@@ -368,10 +368,10 @@ akhir
 
 kelas JodohkanKasus warisi MRPH maka
     # Mewakili satu cabang `| pola [jaga kondisi] maka ...` dalam `jodohkan`.
-    fungsi inisiasi(pola, jaga, badan, lok) maka
+    fungsi inisiasi(pola, kondisi_jaga, badan, lok) maka
         induk.inisiasi(lok)
         ubah ini.pola = pola
-        ubah ini.jaga = jaga
+        ubah ini.kondisi_jaga = kondisi_jaga
         ubah ini.badan = badan
     akhir
 akhir
@@ -467,9 +467,9 @@ akhir
 
 kelas Lemparkan warisi St maka
     # Mewakili pernyataan `lemparkan <pesan> [jenis <tipe>]`.
-    fungsi inisiasi(ekspresi, jenis, lok) maka
+    fungsi inisiasi(ekspresi, tipe_lemparan, lok) maka
         induk.inisiasi(lok)
         ubah ini.ekspresi = ekspresi
-        ubah ini.jenis = jenis
+        ubah ini.jenis = tipe_lemparan
     akhir
 akhir

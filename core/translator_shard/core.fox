@@ -8,7 +8,7 @@ ambil_semua "system_visitor.fox"
 ambil_sebagian tambah, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
 
 kelas ModuleLoader maka
-    fungsi init(interpreter) maka
+    fungsi inisiasi(interpreter) maka
         ubah ini.interpreter = interpreter
         ubah ini._loading_stack = []
     akhir
@@ -33,7 +33,7 @@ kelas FFIBridge maka
 akhir
 
 kelas PenerjemahCore warisi SystemVisitor maka
-    fungsi init(formatter, output_stream) maka
+    fungsi inisiasi(formatter, output_stream) maka
         ubah ini.lingkungan_global = RT.Lingkungan(nil)
         ubah ini.lingkungan = ini.lingkungan_global
 

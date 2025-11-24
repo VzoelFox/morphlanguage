@@ -8,8 +8,7 @@ ambil_sebagian tambah, kurang, panjang, tipe_objek dari "../cotc(stdlib)/core.fo
 
 # Exception khusus untuk menangani alur kontrol
 kelas NilaiKembalian maka
-    biar nilai
-    fungsi init(nilai) maka
+    fungsi inisiasi(nilai) maka
         ubah ini.nilai = nilai
     akhir
 akhir
@@ -19,11 +18,7 @@ kelas LanjutkanLoop maka akhir
 
 # Kesalahan Runtime
 kelas KesalahanRuntime maka
-    biar token
-    biar pesan
-    biar morph_stack
-    biar node
-    fungsi init(token, pesan) maka
+    fungsi inisiasi(token, pesan) maka
         ubah ini.token = token
         ubah ini.pesan = pesan
         ubah ini.morph_stack = []
@@ -35,8 +30,7 @@ kelas KesalahanTipe warisi KesalahanRuntime maka akhir
 kelas KesalahanNama warisi KesalahanRuntime maka akhir
 
 kelas FungsiBawaan maka
-    biar panggil_logic
-    fungsi init(panggil_logic) maka
+    fungsi inisiasi(panggil_logic) maka
         ubah ini.panggil_logic = panggil_logic
     akhir
 
@@ -46,8 +40,7 @@ kelas FungsiBawaan maka
 akhir
 
 kelas FungsiBawaanAsink maka
-    biar panggil_logic
-    fungsi init(panggil_logic) maka
+    fungsi inisiasi(panggil_logic) maka
         ubah ini.panggil_logic = panggil_logic
     akhir
 
@@ -57,14 +50,10 @@ kelas FungsiBawaanAsink maka
 akhir
 
 kelas Lingkungan maka
-    biar nilai
-    biar konstanta
-    biar induk
-
-    fungsi init(induk) maka
+    fungsi inisiasi(parent_env) maka
         ubah ini.nilai = {}
         ubah ini.konstanta = []
-        ubah ini.induk = induk
+        ubah ini.parent = parent_env
     akhir
 
     fungsi definisi(nama, val, adalah_konstan) maka
@@ -85,7 +74,7 @@ kelas Lingkungan maka
             jika lingk.nilai.punya(nama) maka
                 kembali lingk.nilai[nama]
             akhir
-            ubah lingk = lingk.induk
+            ubah lingk = lingk.parent
         akhir
         lemparkan KesalahanNama(token, "Variabel '" + nama + "' belum didefinisikan.")
     akhir
@@ -106,25 +95,21 @@ kelas Lingkungan maka
                 ubah lingk.nilai[nama] = val
                 kembali
             akhir
-            ubah lingk = lingk.induk
+            ubah lingk = lingk.parent
         akhir
         lemparkan KesalahanNama(token, "Variabel '" + nama + "' belum didefinisikan.")
     akhir
 akhir
 
 kelas InstansiVarian maka
-    biar konstruktor
-    biar argumen
-    fungsi init(konstruktor, argumen) maka
+    fungsi inisiasi(konstruktor, argumen) maka
         ubah ini.konstruktor = konstruktor
         ubah ini.argumen = argumen
     akhir
 akhir
 
 kelas KonstruktorVarian maka
-    biar nama
-    biar aritas
-    fungsi init(nama, aritas) maka
+    fungsi inisiasi(nama, aritas) maka
         ubah ini.nama = nama
         ubah ini.aritas = aritas
     akhir
@@ -138,18 +123,14 @@ kelas KonstruktorVarian maka
 akhir
 
 kelas TipeVarian maka
-    biar nama
-    biar konstruktor
-    fungsi init(nama) maka
+    fungsi inisiasi(nama) maka
         ubah ini.nama = nama
         ubah ini.konstruktor = {}
     akhir
 akhir
 
 kelas MorphInstance maka
-    biar kelas_obj
-    biar properti
-    fungsi init(kelas_obj) maka
+    fungsi inisiasi(kelas_obj) maka
         ubah ini.kelas_obj = kelas_obj
         ubah ini.properti = {}
     akhir
@@ -190,11 +171,7 @@ kelas MorphInstance maka
 akhir
 
 kelas MorphKelas maka
-    biar nama
-    biar superkelas
-    biar metode
-
-    fungsi init(nama, superkelas, metode) maka
+    fungsi inisiasi(nama, superkelas, metode) maka
         ubah ini.nama = nama
         ubah ini.superkelas = superkelas
         ubah ini.metode = metode
@@ -202,9 +179,9 @@ kelas MorphKelas maka
 
     asink fungsi panggil(interpreter, node_panggil) maka
         biar instance = MorphInstance(ini)
-        biar inisiasi = ini.cari_metode("inisiasi")
+        biar inisiasi_method = ini.cari_metode("inisiasi")
 
-        jika inisiasi != nil maka
+        jika inisiasi_method != nil maka
             biar argumen = []
             biar i = 0
             selama i < panjang(node_panggil.argumen) maka
@@ -213,7 +190,7 @@ kelas MorphKelas maka
                 ubah i = i + 1
             akhir
 
-            tunggu inisiasi.bind(instance).panggil_metode(interpreter, argumen, node_panggil.token)
+            tunggu inisiasi_method.bind(instance).panggil_metode(interpreter, argumen, node_panggil.token)
         lain
             jika panjang(node_panggil.argumen) > 0 maka
                  lemparkan KesalahanTipe(node_panggil.token, "Konstruktor default tidak menerima argumen.")
@@ -235,11 +212,7 @@ kelas MorphKelas maka
 akhir
 
 kelas Fungsi maka
-    biar deklarasi
-    biar penutup
-    biar adalah_inisiasi
-
-    fungsi init(deklarasi, penutup, adalah_inisiasi) maka
+    fungsi inisiasi(deklarasi, penutup, adalah_inisiasi) maka
         ubah ini.deklarasi = deklarasi
         ubah ini.penutup = penutup
         ubah ini.adalah_inisiasi = adalah_inisiasi
