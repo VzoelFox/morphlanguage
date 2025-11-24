@@ -1,0 +1,219 @@
+# core/translator_shard/expression_visitor.fox
+# Visitor untuk ekspresi
+
+ambil_semua "../morph_t.fox" sebagai T
+ambil_semua "../absolute_syntax_morph.fox" sebagai AST
+ambil_semua "runtime.fox" sebagai RT
+ambil_sebagian tambah, panjang, tipe_objek dari "../cotc(stdlib)/core.fox"
+
+kelas ExpressionVisitor maka
+
+    asink fungsi kunjungi_Tunggu(node) maka
+        biar awaitable = tunggu ini._evaluasi(node.ekspresi)
+        kembali tunggu awaitable
+    akhir
+
+    asink fungsi kunjungi_AmbilProperti(node) maka
+        biar objek = tunggu ini._evaluasi(node.objek)
+
+        jika tipe_objek(objek) == RT.MorphInstance maka
+            biar adalah_akses_internal = salah
+            kembali objek.dapatkan(node.nama, adalah_akses_internal)
+        akhir
+
+        lemparkan RT.KesalahanTipe(node.nama, "Hanya instance kelas yang memiliki properti (FFI belum diimplementasikan penuh).")
+    akhir
+
+    asink fungsi kunjungi_AturProperti(node) maka
+        biar adalah_akses_internal = salah
+        biar objek = tunggu ini._evaluasi(node.objek)
+
+        jika tipe_objek(objek) != RT.MorphInstance maka
+            lemparkan RT.KesalahanTipe(node.nama, "Hanya instance dari kelas yang dapat diatur propertinya.")
+        akhir
+
+        biar nilai = tunggu ini._evaluasi(node.nilai)
+        objek.tetapkan(node.nama, nilai, adalah_akses_internal)
+        kembali nilai
+    akhir
+
+    asink fungsi kunjungi_Ini(node) maka
+        kembali ini.lingkungan.dapatkan(node.kata_kunci)
+    akhir
+
+    asink fungsi kunjungi_Induk(node) maka
+        biar superkelas = ini.lingkungan.dapatkan(node.kata_kunci)
+        biar tok_ini = T.Token(T.NAMA, "ini", node.kata_kunci.baris, node.kata_kunci.kolom)
+        biar instance = ini.lingkungan.dapatkan(tok_ini)
+
+        biar metode = superkelas.cari_metode(node.metode.nilai)
+        jika metode == nil maka
+            lemparkan RT.KesalahanRuntime(node.metode, "Metode tidak ditemukan di superkelas.")
+        akhir
+
+        kembali metode.bind(instance)
+    akhir
+
+    asink fungsi kunjungi_Kamus(node) maka
+        biar kamus = {}
+        biar i = 0
+        selama i < panjang(node.pasangan) maka
+            biar pair = node.pasangan[i]
+            biar kunci = tunggu ini._evaluasi(pair[0])
+            biar nilai = tunggu ini._evaluasi(pair[1])
+
+            ubah kamus[kunci] = nilai
+            ubah i = i + 1
+        akhir
+        kembali kamus
+    akhir
+
+    asink fungsi kunjungi_Daftar(node) maka
+        biar hasil = []
+        biar i = 0
+        selama i < panjang(node.elemen) maka
+            biar val = tunggu ini._evaluasi(node.elemen[i])
+            tambah(hasil, val)
+            ubah i = i + 1
+        akhir
+        kembali hasil
+    akhir
+
+    asink fungsi kunjungi_Akses(node) maka
+        biar objek = tunggu ini._evaluasi(node.objek)
+        biar kunci = tunggu ini._evaluasi(node.kunci)
+
+        kembali objek[kunci]
+    akhir
+
+    asink fungsi kunjungi_Ambil(node) maka
+        biar prompt_str = ""
+        jika node.prompt != nil maka
+            biar p = tunggu ini._evaluasi(node.prompt)
+            ubah prompt_str = ini._ke_string(p)
+        akhir
+
+        kembali nil
+    akhir
+
+    asink fungsi kunjungi_PanggilFungsi(node) maka
+        biar callee = tunggu ini._evaluasi(node.callee)
+
+        biar argumen = []
+        biar i = 0
+        selama i < panjang(node.argumen) maka
+            biar val = tunggu ini._evaluasi(node.argumen[i])
+            tambah(argumen, val)
+            ubah i = i + 1
+        akhir
+
+        jika tipe_objek(callee) == RT.MorphKelas maka
+            kembali tunggu callee.panggil(ini, node)
+        lain
+            jika tipe_objek(callee) == RT.Fungsi atau tipe_objek(callee) == RT.FungsiAsink maka
+                kembali tunggu callee.panggil_metode(ini, argumen, node.token)
+            lain
+                jika tipe_objek(callee) == RT.KonstruktorVarian maka
+                    kembali callee.panggil(argumen, node.token)
+                lain
+                    jika tipe_objek(callee) == RT.FungsiBawaan atau tipe_objek(callee) == RT.FungsiBawaanAsink maka
+                        kembali tunggu callee.panggil(argumen)
+                    akhir
+                akhir
+            akhir
+        akhir
+
+        lemparkan RT.KesalahanTipe(node.token, "Objek tidak bisa dipanggil.")
+    akhir
+
+    asink fungsi kunjungi_Identitas(node) maka
+        kembali ini.lingkungan.dapatkan(node.token)
+    akhir
+
+    asink fungsi kunjungi_Konstanta(node) maka
+        kembali node.nilai
+    akhir
+
+    asink fungsi kunjungi_FoxUnary(node) maka
+        biar kanan = tunggu ini._evaluasi(node.kanan)
+        jika node.op.tipe == T.KURANG maka
+            kembali 0 - kanan
+        lain
+            jika node.op.tipe == T.TIDAK maka
+                kembali tidak ini._apakah_benar(kanan)
+            akhir
+        akhir
+        kembali nil
+    akhir
+
+    asink fungsi kunjungi_FoxBinary(node) maka
+        biar op_tipe = node.op.tipe
+
+        jika op_tipe == T.DAN maka
+            biar kiri = tunggu ini._evaluasi(node.kiri)
+            jika tidak ini._apakah_benar(kiri) maka
+                kembali salah
+            akhir
+            biar kanan = tunggu ini._evaluasi(node.kanan)
+            kembali ini._apakah_benar(kanan)
+        akhir
+
+        jika op_tipe == T.ATAU maka
+            biar kiri = tunggu ini._evaluasi(node.kiri)
+            jika ini._apakah_benar(kiri) maka
+                kembali kiri
+            akhir
+            kembali tunggu ini._evaluasi(node.kanan)
+        akhir
+
+        biar kiri = tunggu ini._evaluasi(node.kiri)
+        biar kanan = tunggu ini._evaluasi(node.kanan)
+
+        jika op_tipe == T.TAMBAH maka
+            kembali kiri + kanan
+        lain
+            jika op_tipe == T.KURANG maka
+                kembali kiri - kanan
+            lain
+                jika op_tipe == T.KALI maka
+                    kembali kiri * kanan
+                lain
+                    jika op_tipe == T.BAGI maka
+                        kembali kiri / kanan
+                    lain
+                        jika op_tipe == T.MODULO maka
+                            kembali kiri % kanan
+                        lain
+                            jika op_tipe == T.LEBIH_DARI maka
+                                kembali kiri > kanan
+                            lain
+                                jika op_tipe == T.KURANG_DARI maka
+                                    kembali kiri < kanan
+                                lain
+                                    jika op_tipe == T.LEBIH_SAMA maka
+                                        kembali kiri >= kanan
+                                    lain
+                                        jika op_tipe == T.KURANG_SAMA maka
+                                            kembali kiri <= kanan
+                                        lain
+                                            jika op_tipe == T.SAMA_DENGAN maka
+                                                kembali kiri == kanan
+                                            lain
+                                                jika op_tipe == T.TIDAK_SAMA maka
+                                                    kembali kiri != kanan
+                                                akhir
+                                            akhir
+                                        akhir
+                                    akhir
+                                akhir
+                            akhir
+                        akhir
+                    akhir
+                akhir
+            akhir
+        akhir
+
+        kembali nil
+    akhir
+
+akhir

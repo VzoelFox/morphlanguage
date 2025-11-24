@@ -1,1 +1,47 @@
-ini tempat masuk utama
+# core/morph.fox
+# Titik Masuk Utama Morph (Self-Hosted)
+
+ambil_semua "lx_morph.fox" sebagai LX
+ambil_semua "crusher.fox" sebagai CR
+ambil_semua "translator.fox" sebagai TR
+ambil_sebagian panjang, tambah dari "cotc(stdlib)/core.fox"
+
+kelas MorphMain maka
+    fungsi inisiasi() maka
+    akhir
+
+    asink fungsi jalankan_file(path) maka
+        # Baca file (Stub)
+        biar source = "biar x = 1"
+
+        # 1. Lexing
+        biar lexer = LX.Leksikal(source, path)
+        biar hasil_lex = lexer.buat_token()
+        biar tokens = hasil_lex[0]
+        biar error_lex = hasil_lex[1]
+
+        jika panjang(error_lex) > 0 maka
+            tulis("Error Lexer:", error_lex)
+            kembali nil
+        akhir
+
+        # 2. Parsing
+        biar parser = CR.Pengurai(tokens)
+        biar ast = parser.urai()
+
+        jika ast == nil maka
+            tulis("Error Parser")
+            kembali nil
+        akhir
+
+        # 3. Translating
+        biar interpreter = TR.Penerjemah(nil, nil)
+        biar hasil = tunggu interpreter.terjemahkan(ast, path)
+
+        tulis("Selesai.")
+    akhir
+akhir
+
+# Entry point script
+biar main = MorphMain()
+# tunggu main.jalankan_file("test.fox")

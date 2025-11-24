@@ -1,1 +1,35 @@
-ini contoh  
+# core/cotc(stdlib)/core.fox
+# Standard Library Stub
+
+fungsi panjang(obj) maka
+    # Placeholder: Harusnya memanggil native len()
+    kembali 0
+akhir
+
+fungsi tambah(lst, item) maka
+    # Placeholder: Harusnya lst.append(item)
+    kembali lst
+akhir
+
+fungsi kurang(lst) maka
+    # Placeholder: pop
+    kembali nil
+akhir
+
+fungsi gabung(lst, sep) maka
+    # Placeholder: join
+    kembali ""
+akhir
+
+fungsi float(val) maka
+    kembali 0.0
+akhir
+
+fungsi int(val) maka
+    kembali 0
+akhir
+
+fungsi tipe_objek(val) maka
+    # Placeholder: type(val)
+    kembali nil
+akhir
