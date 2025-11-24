@@ -1,1 +1,11 @@
-ini interpreter
+# core/translator.fox
+# Interpreter Morph
+
+ambil_semua "translator_shard/core.fox"
+
+# Re-export Penerjemah
+kelas Penerjemah warisi PenerjemahCore maka
+    fungsi init(formatter, output_stream) maka
+        induk.init(formatter, output_stream)
+    akhir
+akhir
